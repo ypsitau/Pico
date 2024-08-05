@@ -1,0 +1,3 @@
+[submodule "debugprobe"]
+	path = debugprobe
+	url = https://github.com/raspberrypi/debugprobe.git
