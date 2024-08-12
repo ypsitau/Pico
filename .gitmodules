@@ -13,3 +13,9 @@
 [submodule "pico-sdk"]
 	path = pico-sdk
 	url = https://github.com/raspberrypi/pico-sdk
+[submodule "picotool"]
+	path = picotool
+	url = https://github.com/raspberrypi/picotool
+[submodule "pico-playground"]
+	path = pico-playground
+	url = https://github.com/raspberrypi/pico-playground
