@@ -1,17 +1,30 @@
 .program fastest
 .wrap_target
-	set pins, 0b10 [31]
-	set pins, 0b01 [31]
+	set pins, 0b10
+	set pins, 0b01
 .wrap
 
 % c-sdk {
-void fastest_program_init(PIO pio, uint idxSm, uint fastest_program_offset, uint pin)
-{
-	pio_gpio_init(pio, pin);
-	pio_gpio_init(pio, pin + 1);
-	pio_sm_set_consecutive_pindirs(pio, idxSm, pin, 2, true);
-	pio_sm_config cfg = fastest_program_get_default_config(fastest_program_offset);
-	sm_config_set_set_pins(&cfg, pin, 2);
-	pio_sm_init(pio, idxSm, fastest_program_offset, &cfg);
-}
+class PIO_fastest {
+private:
+	PIO pio_;
+	static uint offset_;
+public:
+	PIO_fastest(PIO pio) : pio_(pio) {
+		offset_ = pio_add_program(pio_, &fastest_program);
+	}
+	PIO GetPIO() { return pio_; }
+	void Init(uint idxSm, uint pin) {
+		pio_gpio_init(pio_, pin);
+		pio_gpio_init(pio_, pin + 1);
+		pio_sm_set_consecutive_pindirs(pio_, idxSm, pin, 2, true);
+		pio_sm_config cfg = fastest_program_get_default_config(offset_);
+		sm_config_set_set_pins(&cfg, pin, 2);
+		sm_config_set_clkdiv(&cfg, 60000);
+		pio_sm_init(pio_, idxSm, offset_, &cfg);
+	}
+};
+
+uint PIO_fastest::offset_ = 0;
+
 %}
