@@ -1,0 +1,17 @@
+.program fastest
+.wrap_target
+	set pins, 0b10 [31]
+	set pins, 0b01 [31]
+.wrap
+
+% c-sdk {
+void fastest_program_init(PIO pio, uint idxSm, uint fastest_program_offset, uint pin)
+{
+	pio_gpio_init(pio, pin);
+	pio_gpio_init(pio, pin + 1);
+	pio_sm_set_consecutive_pindirs(pio, idxSm, pin, 2, true);
+	pio_sm_config cfg = fastest_program_get_default_config(fastest_program_offset);
+	sm_config_set_set_pins(&cfg, pin, 2);
+	pio_sm_init(pio, idxSm, fastest_program_offset, &cfg);
+}
+%}
