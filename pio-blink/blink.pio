@@ -25,7 +25,7 @@ void blink_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pin)
 
 void blink_start(PIO pio, uint idxSm, uint32_t freq)
 {
-	// freqSys = (2 * (x + 1) + 4) * freq
+	// freqSys = (2 * (x + 1) + 4) * freq .. therefore: x = freqSys / (2 * freq) - 3
 	pio_sm_set_enabled(pio, idxSm, true);
 	pio_sm_put_blocking(pio, idxSm, (clock_get_hz(clk_sys) / (2 * freq)) - 3);
 }
