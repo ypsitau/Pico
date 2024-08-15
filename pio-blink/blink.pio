@@ -3,14 +3,14 @@
 	pull block
 	out y, 32
 .wrap_target
-	set pins, 0b1
-	mov x, y
+	set pins, 0b1	; 1
+	mov x, y		; 1
 loop1:
-	jmp x-- loop1   ; Delay for (x + 1) cycles, x is a 32 bit number
-	set pins, 0b0
-	mov x, y
+	jmp x-- loop1	; x + 1
+	set pins, 0b0	; 1
+	mov x, y		; 1
 loop2:
-	jmp x-- loop2
+	jmp x-- loop2	; x + 1
 .wrap
 
 % c-sdk {
@@ -22,4 +22,12 @@ void blink_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pin)
 	sm_config_set_set_pins(&cfg, pin, 1);
 	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
 }
+
+void blink_start(PIO pio, uint idxSm, uint32_t freq)
+{
+	// freqSys = (2 * (x + 1) + 4) * freq
+	pio_sm_set_enabled(pio, idxSm, true);
+	pio_sm_put_blocking(pio, idxSm, (clock_get_hz(clk_sys) / (2 * freq)) - 3);
+}
+
 %}
