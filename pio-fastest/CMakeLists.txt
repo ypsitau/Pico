@@ -80,7 +80,7 @@ pico_set_program_version(pio-fastest "0.1")
 pico_generate_pio_header(pio-fastest ${CMAKE_CURRENT_LIST_DIR}/pio-fastest.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(pio-fastest 0)
+pico_enable_stdio_uart(pio-fastest 1)
 pico_enable_stdio_usb(pio-fastest 0)
 
 # Add the standard library to the build

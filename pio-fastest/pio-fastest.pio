@@ -5,33 +5,16 @@
 .wrap
 
 % c-sdk {
-class PIOSM_fastest {
-private:
-	uint idxSm_;
-	uint pin_;
-	static PIO pio_;
-	static uint offset_;
-public:
-	PIOSM_fastest(PIO pio, uint idxSim, uint pin) : idxSm_(idxSim), pin_(pin) {
-		if (!pio_) {
-			pio_ = pio;
-			offset_ = pio_add_program(pio_, &fastest_program);
-		}
-	}
-	PIO GetPIO() { return pio_; }
-	uint GetIdxSm() const { return idxSm_; }
-	void Init() {
-		pio_gpio_init(pio_, pin_);
-		pio_gpio_init(pio_, pin_ + 1);
-		pio_sm_set_consecutive_pindirs(pio_, idxSm_, pin_, 2, true);
-		pio_sm_config cfg = fastest_program_get_default_config(offset_);
-		sm_config_set_set_pins(&cfg, pin_, 2);
-		sm_config_set_clkdiv(&cfg, 30000);
-		pio_sm_init(pio_, idxSm_, offset_, &cfg);
-	}
-};
 
-PIO PIOSM_fastest::pio_ = nullptr;
-uint PIOSM_fastest::offset_ = 0;
+void fastest_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pinFirst)
+{
+	pio_gpio_init(pio, pinFirst);
+	pio_gpio_init(pio, pinFirst + 1);
+	pio_sm_set_consecutive_pindirs(pio, idxSm, pinFirst, 2, true);
+	pio_sm_config cfg = fastest_program_get_default_config(offsetProgram);
+	sm_config_set_set_pins(&cfg, pinFirst, 2);
+	sm_config_set_clkdiv(&cfg, 30000); // 120000000 / 30000 = 4000Hz
+	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
+}
 
 %}

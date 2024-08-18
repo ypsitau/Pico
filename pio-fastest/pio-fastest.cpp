@@ -6,13 +6,15 @@
 
 int main()
 {
-	uint32_t freqPeri = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_PERI) * 1000;
 	stdio_init_all();
-	PIOSM_fastest pioSm(pio0, 0, 14);
-	//pio_gpio_init
+	PIO pio = pio0;
+	printf("System Frequency: %dHz\n", clock_get_hz(clk_sys));
+	uint offsetProgram = pio_add_program(pio, &fastest_program);
 	do {
-		pioSm.Init();
-		pio_sm_set_enabled(pioSm.GetPIO(), pioSm.GetIdxSm(), true);
+		int idxSm = pio_claim_unused_sm(pio, true);
+		uint pinFirst = 14;
+		fastest_program_init(pio, idxSm, offsetProgram, pinFirst);
+		pio_sm_set_enabled(pio, idxSm, true);
 	} while (0);
-	for (;;) ;
+	for (;;) tight_loop_contents();
 }
