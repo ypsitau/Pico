@@ -26,6 +26,28 @@ void StartProgram(const pio_program& program, uint32_t numIn, bool shift_right =
 int main()
 {
 	stdio_init_all();
-	StartProgram(shift_program, 0x01234567);
+	gpio_init(14);
+	gpio_init(15);
+	gpio_set_dir(14, GPIO_OUT);
+	gpio_set_dir(15, GPIO_OUT);
+	for (int j = 0; j < 255; j++) {
+		printf("%d\n", j);
+		sleep_ms(3);
+		uint8_t bitPattern = j;
+		for (int i = 0; i < 24; i++, bitPattern <<= 1) {
+			if (bitPattern & 0x80) {
+				gpio_put(14, true);
+				gpio_put(15, true);
+			} else {
+				gpio_put(14, false);
+				gpio_put(15, false);
+			}
+			sleep_us(1);
+			gpio_put(14, true);
+			gpio_put(15, false);
+			sleep_us(1);
+		}
+		sleep_ms(100);
+	}
 	for (;;) tight_loop_contents();
 }
