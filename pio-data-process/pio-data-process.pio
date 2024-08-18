@@ -1,0 +1,48 @@
+.program test1
+loop:
+	pull block
+	mov isr, osr
+	push
+	jmp loop
+
+.program test2
+loop:
+	pull block
+	mov isr, ::osr
+	push
+	jmp loop
+
+.program test3
+loop:
+	pull block
+	mov isr, !osr
+	push
+	jmp loop
+
+.program test4
+loop:
+	pull block
+	mov isr, osr
+	in null, 6		; shift by 6 bits
+	push
+	jmp loop
+
+.program test5
+loop:
+	pull block
+	mov isr, osr
+	set x, 0b10111
+	in x, 6		; shift by 6 bits
+	push
+	jmp loop
+
+.program test6
+loop:
+	pull block
+	mov isr, osr
+	in isr, 6		; shift by 6 bits
+	push
+	jmp loop
+
+% c-sdk {
+%}
