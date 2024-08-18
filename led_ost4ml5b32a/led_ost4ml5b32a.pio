@@ -1,0 +1,14 @@
+.program shift
+	pull block
+	mov x, osr
+.wrap_target
+	mov isr, x
+	in isr, 1
+	mov x, isr
+	;mov isr, ::isr
+	push
+	;push noblock
+.wrap
+
+% c-sdk {
+%}
