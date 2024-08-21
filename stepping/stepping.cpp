@@ -74,13 +74,15 @@ int main()
 #endif
 	int iTbl = 0;
 	int nStepsFirst = 100;
-	for (int i = 0; i < 2048; i++) {
+	//for (int i = 0; i < 2048; i++) {
+	for (int i = 0; ; i++) {
 		ControlPin controlPin = controlPinTbl[iTbl];	
 		gpio_put(12, controlPin.pinA);
 		gpio_put(13, controlPin.pinB);
 		gpio_put(14, controlPin.pinC);
 		gpio_put(15, controlPin.pinD);
-		sleep_us((i < nStepsFirst)? 2500 : 1600);
+		//sleep_us((i < nStepsFirst)? 2500 : 1600);
+		sleep_us(2000);
 		if (++iTbl >= ArraySizeOf(controlPinTbl)) iTbl = 0;
 	}
 }
