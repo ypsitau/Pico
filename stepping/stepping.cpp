@@ -6,25 +6,26 @@
 
 #define ArraySizeOf(x) (sizeof(x) / sizeof(x[0]))
 
-void StartProgram(const pio_program& program, uint32_t numIn, bool shift_right = true)
+int main()
 {
 	PIO pio = pio0;
-	uint offsetProgram = pio_add_program(pio, &program);
-	int idxSm = pio_claim_unused_sm(pio, true);
-	pio_sm_config cfg = shift_program_get_default_config(offsetProgram);
-	sm_config_set_in_shift(&cfg, shift_right, false, 0);
-	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
-	pio_sm_set_enabled(pio, idxSm, true);
-	pio_sm_put(pio, idxSm, numIn);
-	for (int i = 0; i < 32; i++) {
-		uint32_t numOut = pio_sm_get_blocking(pio, idxSm);
-		printf("0b%032b\n", numOut);
-		sleep_ms(100);
-	}
-	pio_remove_program(pio, &program, offsetProgram);
-	pio_sm_unclaim(pio, idxSm);
+	uint offsetProgram = pio_add_program(pio, &shiftout4bits_program);
+	printf("System Frequency: %dHz\n", clock_get_hz(clk_sys));
+	do {
+		uint freq = 1;
+		int idxSm = pio_claim_unused_sm(pio, true);
+		uint pinFirst = 12;
+		shiftout4bits_program_init(pio, idxSm, offsetProgram, pinFirst);
+		pio_sm_set_enabled(pio, idxSm, true);
+		pio_sm_put(pio, idxSm, 0b1001'1100'0110'0011'1001'1100'0110'0011);
+		//pio_sm_put(pio, idxSm, 0xffffffff);
+		pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / (2 * freq)) - 3);
+	} while (0);
+	for (;;) ;
+	return 0;
 }
 
+#if 0
 struct ControlPin {
 	bool pinA, pinB, pinC, pinD;
 };
@@ -86,3 +87,4 @@ int main()
 		if (++iTbl >= ArraySizeOf(controlPinTbl)) iTbl = 0;
 	}
 }
+#endif

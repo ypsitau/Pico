@@ -1,14 +1,28 @@
-.program shift
+.program shiftout4bits
 	pull block
-	mov x, osr
+	mov isr, osr
+	pull block
+	mov y, osr
 .wrap_target
-	mov isr, x
-	in isr, 1
-	mov x, isr
-	;mov isr, ::isr
-	push
-	;push noblock
+	in isr, 4			; right-rotate isr by 4bits
+	mov pins, isr		; output lower 4bits of isr to pins
+	mov x, y
+loop_delay:
+	jmp x-- loop_delay
 .wrap
 
 % c-sdk {
+
+void shiftout4bits_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pinFirst)
+{
+	uint nPins = 4;
+	for (uint i = 0; i < nPins; i++) pio_gpio_init(pio, pinFirst + i);
+	pio_sm_set_consecutive_pindirs(pio, idxSm, pinFirst, nPins, true);
+	pio_sm_config cfg = shiftout4bits_program_get_default_config(offsetProgram);
+	sm_config_set_out_pins(&cfg, pinFirst, nPins);
+	sm_config_set_set_pins(&cfg, pinFirst, nPins);
+	//sm_config_set_clkdiv(&cfg, 30000); // 120000000 / 30000 = 4000Hz
+	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
+}
+
 %}
