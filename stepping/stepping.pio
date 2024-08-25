@@ -1,14 +1,14 @@
 .program shiftout4bits
-	pull block
-	mov isr, osr
-	pull block
-	mov y, osr
+public entry_point:
+	pull
+	mov isr, osr		; isr = pattern
+	pull				; osr = delay
 .wrap_target
 	in isr, 4			; right-rotate isr by 4bits
 	mov pins, isr		; output lower 4bits of isr to pins
-	mov x, y
+	mov x, osr
 loop_delay:
-	jmp x-- loop_delay
+	jmp x-- loop_delay	; (delay + 1) cycles
 .wrap
 
 % c-sdk {
@@ -21,8 +21,15 @@ void shiftout4bits_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pi
 	pio_sm_config cfg = shiftout4bits_program_get_default_config(offsetProgram);
 	sm_config_set_out_pins(&cfg, pinFirst, nPins);
 	sm_config_set_set_pins(&cfg, pinFirst, nPins);
-	//sm_config_set_clkdiv(&cfg, 30000); // 120000000 / 30000 = 4000Hz
+	//sm_config_set_clkdiv(&cfg, 31250); // 125000000 / 31250 = 4000Hz
 	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
+}
+
+void shiftout4bits_set_pattern(PIO pio, uint idxSm, uint32_t pattern, uint freq)
+{
+	const uint nStepsExceptDelay = 4;
+	pio_sm_put(pio, idxSm, pattern);
+	pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / freq - 1 - nStepsExceptDelay));
 }
 
 %}

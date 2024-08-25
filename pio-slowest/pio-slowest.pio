@@ -1,0 +1,28 @@
+; (32 * 32 + 2) * 2 = 2052 clocks
+.program slowest
+.wrap_target
+	set pins, 0b10
+	set x, 31
+loop1:
+	jmp x--, loop1 [31]
+	set pins, 0b01
+	set x, 31
+loop2:
+	jmp x--, loop2 [31]
+.wrap
+
+% c-sdk {
+
+void slowest_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pinFirst)
+{
+	pio_gpio_init(pio, pinFirst);
+	pio_gpio_init(pio, pinFirst + 1);
+	pio_sm_set_consecutive_pindirs(pio, idxSm, pinFirst, 2, true);
+	pio_sm_config cfg = slowest_program_get_default_config(offsetProgram);
+	sm_config_set_set_pins(&cfg, pinFirst, 2);
+	//sm_config_set_clkdiv(&cfg, 65535); // 125000000 / 65535 = 1907.38Hz
+	sm_config_set_clkdiv(&cfg, 100);
+	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
+}
+
+%}

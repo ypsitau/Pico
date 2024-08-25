@@ -25,6 +25,7 @@ int main()
 	stdio_init_all();
 	printf("----\n");
 	StartProgram("echo back", test1_program, 0x12345678);
+#if 0
 	StartProgram("{mov isr, ::osr}", test2_program, 0x89abcdef);
 	StartProgram("{mov isr, !osr}", test3_program, 0x89abcdef);
 	StartProgram("{in null, 6} (shift_right = true)", test4_program, 0x89abcdef, true);
@@ -33,5 +34,6 @@ int main()
 	StartProgram("{set x, 0b10111; in x, 6} (shift_right = false)", test5_program, 0x89abcdef, false);
 	StartProgram("{in isr, 6} (shift_right = true)", test6_program, 0x89abcdea, true);
 	StartProgram("{in isr, 6} (shift_right = false)", test6_program, 0x89abcdea, false);
+#endif
 	for (;;) tight_loop_contents();
 }

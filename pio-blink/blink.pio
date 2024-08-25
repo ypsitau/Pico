@@ -12,6 +12,7 @@ loop1:
 loop2:
 	jmp x-- loop2	; x + 1
 .wrap
+public entry_point:
 
 % c-sdk {
 void blink_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pin)

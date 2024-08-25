@@ -1,0 +1,8 @@
+.program peekvalue
+loop:
+	mov isr, x
+	jmp x--, loop
+	jmp loop
+
+% c-sdk {
+%}

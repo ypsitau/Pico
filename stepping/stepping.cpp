@@ -4,28 +4,32 @@
 #include <hardware/clocks.h>
 #include "stepping.pio.h"
 
-#define ArraySizeOf(x) (sizeof(x) / sizeof(x[0]))
-
 int main()
 {
+	stdio_init_all();
 	PIO pio = pio0;
 	uint offsetProgram = pio_add_program(pio, &shiftout4bits_program);
-	printf("System Frequency: %dHz\n", clock_get_hz(clk_sys));
+	printf("System Frequency: %dHz (measured: %d000Hz)\n",
+			clock_get_hz(clk_sys), frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS));
 	do {
-		uint freq = 1;
 		int idxSm = pio_claim_unused_sm(pio, true);
-		uint pinFirst = 12;
+		const uint pinFirst = 12;
 		shiftout4bits_program_init(pio, idxSm, offsetProgram, pinFirst);
 		pio_sm_set_enabled(pio, idxSm, true);
-		pio_sm_put(pio, idxSm, 0b1001'1100'0110'0011'1001'1100'0110'0011);
-		//pio_sm_put(pio, idxSm, 0xffffffff);
-		pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / (2 * freq)) - 3);
+		//const uint32_t pattern = 0b1100'0110'0011'1001'1100'0110'0011'1001;
+		//const uint32_t pattern = 0b1100'1001'0011'0110'1100'1001'0011'0110;
+		//const uint32_t pattern = 0b1100'1000'1001'0001'0011'0010'0110'0100;
+		const uint32_t pattern = 0b1100'0100'0110'0010'0011'0001'1001'1000;
+		const uint freq = 10;
+		shiftout4bits_set_pattern(pio, idxSm, pattern, freq);
 	} while (0);
 	for (;;) ;
 	return 0;
 }
 
 #if 0
+#define ArraySizeOf(x) (sizeof(x) / sizeof(x[0]))
+
 struct ControlPin {
 	bool pinA, pinB, pinC, pinD;
 };
