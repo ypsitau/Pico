@@ -1,35 +1,51 @@
-.program shiftout4bits
-public entry_point:
+;===============================================================================
+; rotateout4bits
+; Repeat the process of putting out lowest 4 bits of the given pattern value and
+; rotate it by 4 bits for specified times.
+;===============================================================================
+.program rotateout4bits
+public suspend:
+	mov isr, x
+	push
+public entry:
+.wrap_target
 	pull
 	mov isr, osr		; isr = pattern
-	pull				; osr = delay
-.wrap_target
+	pull
+	mov x, osr			; x = nPulses
+	pull				; osr = nStepsDelay
+loopMain:
+public marker1:
 	in isr, 4			; right-rotate isr by 4bits
 	mov pins, isr		; output lower 4bits of isr to pins
-	mov x, osr
-loop_delay:
-	jmp x-- loop_delay	; (delay + 1) cycles
+	mov y, osr
+public marker2:
+loopDelay:
+	jmp y--, loopDelay	; (nStepsDelay + 1) cycles
+	jmp x--, loopMain
+	set x, 0
 .wrap
+
 
 % c-sdk {
 
-void shiftout4bits_program_init(PIO pio, uint idxSm, uint offsetProgram, uint pinFirst)
+void rotateout4bits_program_init(PIO pio, uint idxSm, uint offsetProgram, int gpioFirst)
 {
 	uint nPins = 4;
-	for (uint i = 0; i < nPins; i++) pio_gpio_init(pio, pinFirst + i);
-	pio_sm_set_consecutive_pindirs(pio, idxSm, pinFirst, nPins, true);
-	pio_sm_config cfg = shiftout4bits_program_get_default_config(offsetProgram);
-	sm_config_set_out_pins(&cfg, pinFirst, nPins);
-	sm_config_set_set_pins(&cfg, pinFirst, nPins);
-	//sm_config_set_clkdiv(&cfg, 31250); // 125000000 / 31250 = 4000Hz
+	for (int i = 0; i < nPins; i++) pio_gpio_init(pio, gpioFirst + i);
+	pio_sm_set_consecutive_pindirs(pio, idxSm, gpioFirst, nPins, true);
+	pio_sm_config cfg = rotateout4bits_program_get_default_config(offsetProgram);
+	sm_config_set_out_pins(&cfg, gpioFirst, nPins);
 	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
+	pio_sm_exec(pio, idxSm, pio_encode_jmp(offsetProgram + rotateout4bits_offset_entry));
 }
 
-void shiftout4bits_set_pattern(PIO pio, uint idxSm, uint32_t pattern, uint freq)
+void rotateout4bits_set_pattern(PIO pio, uint idxSm, uint32_t pattern, uint32_t nPulses, uint32_t nPulsesPerSec)
 {
-	const uint nStepsExceptDelay = 4;
+	const uint nStepsExceptDelay = rotateout4bits_offset_marker2 - rotateout4bits_offset_marker1 + 1;
 	pio_sm_put(pio, idxSm, pattern);
-	pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / freq - 1 - nStepsExceptDelay));
+	pio_sm_put(pio, idxSm, nPulses - 1);
+	pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / nPulsesPerSec - 1 - nStepsExceptDelay));
 }
 
 %}
