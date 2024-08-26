@@ -1,9 +1,9 @@
 ;===============================================================================
-; rotateout4bits
+; RotateOut4Bits
 ; Repeat the process of putting out lowest 4 bits of the given pattern value and
 ; rotate it by 4 bits for specified times.
 ;===============================================================================
-.program rotateout4bits
+.program RotateOut4Bits
 public suspend:
 	mov isr, x
 	push
@@ -29,20 +29,20 @@ loopDelay:
 
 % c-sdk {
 
-void rotateout4bits_program_init(PIO pio, uint idxSm, uint offsetProgram, int gpioFirst)
+static void RotateOut4Bits_program_init(PIO pio, uint idxSm, uint offsetProgram, int gpioFirst)
 {
 	uint nPins = 4;
 	for (int i = 0; i < nPins; i++) pio_gpio_init(pio, gpioFirst + i);
 	pio_sm_set_consecutive_pindirs(pio, idxSm, gpioFirst, nPins, true);
-	pio_sm_config cfg = rotateout4bits_program_get_default_config(offsetProgram);
+	pio_sm_config cfg = RotateOut4Bits_program_get_default_config(offsetProgram);
 	sm_config_set_out_pins(&cfg, gpioFirst, nPins);
 	pio_sm_init(pio, idxSm, offsetProgram, &cfg);
-	pio_sm_exec(pio, idxSm, pio_encode_jmp(offsetProgram + rotateout4bits_offset_entry));
+	pio_sm_exec(pio, idxSm, pio_encode_jmp(offsetProgram + RotateOut4Bits_offset_entry));
 }
 
-void rotateout4bits_set_pattern(PIO pio, uint idxSm, uint32_t pattern, uint32_t nPulses, uint32_t nPulsesPerSec)
+static void RotateOut4Bits_set_pattern(PIO pio, uint idxSm, uint32_t pattern, uint32_t nPulses, uint32_t nPulsesPerSec)
 {
-	const uint nStepsExceptDelay = rotateout4bits_offset_marker2 - rotateout4bits_offset_marker1 + 1;
+	const uint nStepsExceptDelay = RotateOut4Bits_offset_marker2 - RotateOut4Bits_offset_marker1 + 1;
 	pio_sm_put(pio, idxSm, pattern);
 	pio_sm_put(pio, idxSm, nPulses - 1);
 	pio_sm_put(pio, idxSm, (clock_get_hz(clk_sys) / nPulsesPerSec - 1 - nStepsExceptDelay));

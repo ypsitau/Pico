@@ -156,39 +156,39 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
   message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(stepping C CXX ASM)
+project(test-StepMotor C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(stepping stepping.cpp)
+add_executable(test-StepMotor test-StepMotor.cpp StepMotor.cpp)
 
-pico_set_program_name(stepping "stepping")
-pico_set_program_version(stepping "0.1")
+pico_set_program_name(test-StepMotor "test-StepMotor")
+pico_set_program_version(test-StepMotor "0.1")
 
 # Generate PIO header
-pico_generate_pio_header(stepping ${CMAKE_CURRENT_LIST_DIR}/stepping.pio)
+pico_generate_pio_header(test-StepMotor ${CMAKE_CURRENT_LIST_DIR}/RotateOut4Bits.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(stepping 1)
-pico_enable_stdio_usb(stepping 0)
+pico_enable_stdio_uart(test-StepMotor 1)
+pico_enable_stdio_usb(test-StepMotor 0)
 
 # Add the standard library to the build
-target_link_libraries(stepping
+target_link_libraries(test-StepMotor
         pico_stdlib)
 
 # Add the standard include files to the build
-target_include_directories(stepping PRIVATE
+target_include_directories(test-StepMotor PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
 # Add any user requested libraries
-target_link_libraries(stepping 
+target_link_libraries(test-StepMotor 
         hardware_pio
         )
 
-pico_add_extra_outputs(stepping)
+pico_add_extra_outputs(test-StepMotor)
 
