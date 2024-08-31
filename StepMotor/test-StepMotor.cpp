@@ -15,7 +15,7 @@ int main()
 	StepMotor stepMotorR(1, 12, 400);
 	stepMotorL.Enable();
 	stepMotorR.Enable();
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 6; i++) {
 		uint gpio = 16 + i;
 		gpio_init(gpio);
 		gpio_set_dir(gpio, GPIO_IN);
@@ -24,21 +24,29 @@ int main()
 	for (;;) {
 		if (!gpio_get(16)) {
 			stepMotorL.Stop();
-			//stepMotorR.Stop();
 			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 			stepMotorL.StartFullA(-1);
-			//stepMotorR.StartFullA(-1);
 			sleep_ms(500);
 		}
 		if (!gpio_get(17)) {
-			//stepMotorL.Stop();
-			stepMotorR.Stop();
+			stepMotorL.Stop();
 			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
-			//stepMotorL.StartFullB(-1);
-			stepMotorR.StartFullA(-1);
+			stepMotorL.StartFullB(-1);
 			sleep_ms(500);
 		}
 		if (!gpio_get(18)) {
+			stepMotorR.Stop();
+			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			stepMotorR.StartFullA(-1);
+			sleep_ms(500);
+		}
+		if (!gpio_get(19)) {
+			stepMotorR.Stop();
+			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			stepMotorR.StartFullB(-1);
+			sleep_ms(500);
+		}
+		if (!gpio_get(20)) {
 			stepMotorL.Stop();
 			stepMotorR.Stop();
 			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
