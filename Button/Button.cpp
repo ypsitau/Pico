@@ -2,21 +2,35 @@
 #include <pico/stdlib.h>
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
+#include "FIFOBuff.h"
 
 class Button {
+public:
+	enum class EventType { None, Press, Release };
+	class Event {
+	private:
+		EventType eventType_;
+		const Button* pButton_;
+	public:
+		Event() : eventType_(EventType::None), pButton_(nullptr) {}
+		Event(const Event& event) : eventType_(event.eventType_), pButton_(event.pButton_) {}
+		Event(EventType eventType, const Button* pButton) : eventType_(eventType), pButton_(pButton) {}
+	};
+	using EventFIFO = FIFOBuff<Event, 32>;
 private:
 	uint gpio_;
-	volatile bool pushedFlag_;
+	volatile bool status_;
 private:
 	static size_t nButtons_;
 	static Button* pButtonTbl_[32];
 	static struct repeating_timer repeatingTimer_;
+	static EventFIFO eventFIFO_;
 public:
 	static void Initialize(int32_t msecPolling);
 public:
 	Button(uint gpio);
 	uint GetGPIO() const { return gpio_; }
-	bool IsPushed() const { return pushedFlag_; }
+	bool GetStatus() const { return status_; }
 private:
 	static bool Callback(struct repeating_timer* pRepeatingTimer);
 };
@@ -24,6 +38,7 @@ private:
 size_t Button::nButtons_ = 0;
 Button* Button::pButtonTbl_[32];
 struct repeating_timer Button::repeatingTimer_;
+Button::EventFIFO Button::eventFIFO_;
 
 void Button::Initialize(int32_t msecPolling)
 {
@@ -37,7 +52,7 @@ void Button::Initialize(int32_t msecPolling)
 	::add_repeating_timer_ms(msecPolling, Callback, nullptr, &repeatingTimer_);
 }
 
-Button::Button(uint gpio) : gpio_(gpio), pushedFlag_(false)
+Button::Button(uint gpio) : gpio_(gpio), status_(false)
 {
 	pButtonTbl_[nButtons_++] = this;
 }
@@ -46,7 +61,13 @@ bool Button::Callback(struct repeating_timer* pRepeatingTimer)
 {
 	for (size_t i = 0; i < nButtons_; i++) {
 		Button& button =  *pButtonTbl_[i];
-		button.pushedFlag_ = !::gpio_get(button.gpio_);
+		bool status = !::gpio_get(button.gpio_);
+		if (status && !button.status_) {
+
+		} else if (!status && button.status_) {
+
+		}
+		button.status_ = status;
 	}
     return true;
 }
@@ -61,8 +82,8 @@ int main()
 	Button::Initialize(10);
 	for (;;) {
 		printf("%d %d %d %d %d %d\n",
-			buttonLeft.IsPushed(), buttonUp.IsPushed(), buttonDown.IsPushed(), buttonRight.IsPushed(),
-			buttonA.IsPushed(), buttonB.IsPushed());
+			buttonLeft.GetStatus(), buttonUp.GetStatus(), buttonDown.GetStatus(), buttonRight.GetStatus(),
+			buttonA.GetStatus(), buttonB.GetStatus());
 		sleep_ms(100);
 	}
 }
