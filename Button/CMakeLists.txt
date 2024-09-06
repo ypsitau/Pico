@@ -100,7 +100,7 @@ pico_set_program_name(Button "Button")
 pico_set_program_version(Button "0.1")
 
 # Generate PIO header
-pico_generate_pio_header(Button ${CMAKE_CURRENT_LIST_DIR}/Button.pio)
+#pico_generate_pio_header(Button ${CMAKE_CURRENT_LIST_DIR}/Button.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(Button 1)
@@ -122,4 +122,3 @@ target_link_libraries(Button
         )
 
 pico_add_extra_outputs(Button)
-

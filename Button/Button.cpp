@@ -2,22 +2,34 @@
 #include <pico/stdlib.h>
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
-#include "Button.pio.h"
+
+class Button {
+private:
+	static struct repeating_timer repeatingTimer_;
+public:
+	static void Initialize(int32_t msecPolling);
+private:
+	static bool Callback(struct repeating_timer* pRepeatingTimer);
+};
+
+struct repeating_timer Button::repeatingTimer_;
+
+void Button::Initialize(int32_t msecPolling)
+{
+	::add_repeating_timer_ms(msecPolling, Callback, nullptr, &repeatingTimer_);
+}
+
+bool Button::Callback(struct repeating_timer* pRepeatingTimer)
+{
+    printf("Repeat at %lld\n", ::time_us_64());
+    return true;
+}
 
 int main()
 {
-	stdio_init_all();
-	printf("System Frequency: %dHz\n", clock_get_hz(clk_sys));
-	PIO pio = pio0;
-	uint offsetProgram = pio_add_program(pio, &ButtonFrontEnd_program);
-	int idxSm = pio_claim_unused_sm(pio, true);
-	do {
-		uint pinFirst = 16;
-		ButtonFrontEnd_program_init(pio, idxSm, offsetProgram, pinFirst, 3);
-		pio_sm_set_enabled(pio, idxSm, true);
-	} while (0);
+	::stdio_init_all();
+	Button::Initialize(500);
 	for (;;) {
-		uint32_t num = pio_sm_get_blocking(pio, idxSm);
-		printf("%08x\n", num);
+		//printf("%08x\n", num);
 	}
 }
