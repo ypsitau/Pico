@@ -41,7 +41,7 @@ public:
 		posWrite_ = posWriteNext;
 	}
 	T_Elem ReadData() {
-		if (posRead_ == posWrite_) return 0;
+		//if (posRead_ == posWrite_) return 0;
 		T_Elem data = buff_[posRead_];
 		posRead_ = (posRead_ == sizeMinusOne)? 0 : posRead_ + 1;
 		return data;
