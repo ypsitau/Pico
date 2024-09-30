@@ -11,31 +11,37 @@ class SSD1306 {
 public:
 	static const uint8_t Addr = 0x3c;
 public:
-	static void SendCmd(uint8_t cmd) {
-		uint8_t buff[2];
-		buff[0] =
-			(0b1 << 7) |	// Co = 1
-			(0b0 << 6);		// D/C# = 0
-		buff[1] = cmd;
-		::i2c_write_blocking(i2c_default, Addr, buff, sizeof(buff), false);
-	};		
-	struct Cmd {
+	class I2C {
+	private:
+		uint8_t addr_;
+	public:
+		I2C(uint8_t addr) : addr_(addr) {}
+    public:
+		void SendCmd(uint8_t cmd) {
+			uint8_t buff[2];
+			buff[0] =
+				(0b1 << 7) |	// Co = 1
+				(0b0 << 6);		// D/C# = 0
+			buff[1] = cmd;
+			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
+		};
+public:
 		// 1. Fundamental Command
-		static void SetContrastControl(uint8_t contrast) {
+		void SetContrastControl(uint8_t contrast) {
 			SendCmd(0x81);
 			SendCmd(contrast);
 		}
-		static void EntireDisplayOn(uint8_t on) {
+		void EntireDisplayOn(uint8_t on) {
 			SendCmd(0xa4 | on);
 		}
-		static void SetNormalInverseDisplay(uint8_t inverse) {
+		void SetNormalInverseDisplay(uint8_t inverse) {
 			SendCmd(0xa6 | inverse);
 		}
-		static void SetDisplayOnOff(uint8_t on) {
+		void SetDisplayOnOff(uint8_t on) {
 			SendCmd(0xae | on);
 		}
 		// 2. Scrolling Command
-		static void ContinuousHorizontalScrollSetup(uint8_t left, uint8_t startPageAddr, uint8_t endPageAddr, uint8_t framesInterval) {
+		void ContinuousHorizontalScrollSetup(uint8_t left, uint8_t startPageAddr, uint8_t endPageAddr, uint8_t framesInterval) {
 			SendCmd(0x26 | left);
 			SendCmd(0x00);	// Dummy byte
 			SendCmd(startPageAddr);
@@ -48,6 +54,8 @@ public:
 		// 4. Hardware Configuration (Panel resolution & layout related) Command
 		// 5. Timing & Driving Schemd Setting Command
 	};
+public:
+	I2C i2c_;
 public:
 	SSD1306() {}
 };
