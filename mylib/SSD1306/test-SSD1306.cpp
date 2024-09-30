@@ -44,12 +44,26 @@ public:
 		// 2. Scrolling Command
 		void ContinuousHorizontalScrollSetup(uint8_t left, uint8_t startPageAddr, uint8_t endPageAddr, uint8_t framesInterval) {
 			SendCmd(0x26 | left);
-			SendCmd(0x00);	// Dummy byte
+			SendCmd(0x00);				// Dummy byte
 			SendCmd(startPageAddr);
 			SendCmd(framesInterval);
 			SendCmd(endPageAddr);
-			SendCmd(0x00);	// Dummy byte
-			SendCmd(0xff);	// Dummy byte
+			SendCmd(0x00);				// Dummy byte
+			SendCmd(0xff);				// Dummy byte
+		}
+		void ContinuousVerticalAndHorizontalScrollSetup(uint8_t left, uint8_t startPageAddr, uint8_t endPageAddr, uint8_t framesInterval, uint8_t verticalScrollingOffset) {
+			SendCmd(0x29 + left);
+			SendCmd(0x00);				// Dummy byte
+			SendCmd(startPageAddr);
+			SendCmd(framesInterval);
+			SendCmd(endPageAddr);
+			SendCmd(verticalScrollingOffset);
+		}
+		void DeactivateScroll() {
+			SendCmd(0x2e);
+		}
+		void ActivateScroll() {
+			SendCmd(0x2f);
 		}
 		// 3. Addressing Setting Command
 		// 4. Hardware Configuration (Panel resolution & layout related) Command
