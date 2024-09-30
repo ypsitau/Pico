@@ -17,6 +17,7 @@ public:
 	public:
 		I2C(uint8_t addr) : addr_(addr) {}
     public:
+		uint8_t GeAddr() { return addr_; }
 		void SendCmd(uint8_t cmd) {
 			uint8_t buff[2];
 			buff[0] =
@@ -24,7 +25,7 @@ public:
 				(0b0 << 6);		// D/C# = 0
 			buff[1] = cmd;
 			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
-		};
+		}
 public:
 		// 1. Fundamental Command
 		void SetContrastControl(uint8_t contrast) {
@@ -57,7 +58,7 @@ public:
 public:
 	I2C i2c_;
 public:
-	SSD1306() {}
+	SSD1306(uint8_t addr = 0x3c) : i2c_(addr) {}
 };
 
 #define ArraySizeOf(x) (sizeof(x) / sizeof(x[0]))
