@@ -13,9 +13,9 @@ int main()
 	oled.Initialize();
 	oled.Refresh();
 	for (int i = 0; i < 3; i++) {
-		oled.raw.EntireDisplayOn(1);
+		oled.Flash(true);
 		::sleep_ms(500);
-		oled.raw.EntireDisplayOn(0);
+		oled.Flash(false);
 		::sleep_ms(500);
 	}
 	oled.DrawLine(0, 0, 100, 30, true);

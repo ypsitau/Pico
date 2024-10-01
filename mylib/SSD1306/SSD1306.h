@@ -39,16 +39,12 @@ public:
 		}
 		uint8_t GetAddr() const { return addr_; }
 		void WriteCtrl(uint8_t ctrl) const {
-#if 0
-			printf("%02x ", ctrl);
-#else
 			uint8_t buff[2];
 			buff[0] =
 				(0b1 << 7) |	// Co = 1
 				(0b0 << 6);		// D/C# = 0
 			buff[1] = ctrl;
 			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
-#endif
 		}
 		uint8_t* GetBitPattern() { return bitPattern_; }
 		void ClearBitPattern() {
@@ -221,6 +217,7 @@ public:
 		raw.SetPageAddress(0, NumPages - 1);
 		raw.WriteBitPattern();
 	}
+	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
 	void PutPixel(int x, int y, bool on);
 	void DrawLine(int x0, int y0, int x1, int y1, bool on);
 };
