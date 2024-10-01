@@ -21,25 +21,34 @@ public:
 		uint8_t* bitPatternBuff_;
 		uint8_t* bitPattern_;
 	public:
-		Raw(uint8_t addr) : addr_(addr) {
+		Raw(uint8_t addr) : addr_(addr), bitPatternBuff_(nullptr), bitPattern_(nullptr) {}
+		~Raw() {
+			::free(bitPatternBuff_);
+		}
+		void AllocBuff() {
 			bitPatternBuff_ = reinterpret_cast<uint8_t*>(::malloc(BitPatternLen + 1));
 			bitPatternBuff_[0] = 
 				(0b0 << 7) |	// Co = 0
 				(0b1 << 6);		// D/C# = 1
 			bitPattern_ = bitPatternBuff_ + 1;
+			ClearBitPattern();
 		}
-		~Raw() {
-			::free(bitPatternBuff_);
-		}
-	public:
-		uint8_t GeAddr() const { return addr_; }
+		uint8_t GetAddr() const { return addr_; }
 		void WriteCtrl(uint8_t ctrl) const {
+#if 0
+			printf("%02x ", ctrl);
+#else
 			uint8_t buff[2];
 			buff[0] =
 				(0b1 << 7) |	// Co = 1
 				(0b0 << 6);		// D/C# = 0
 			buff[1] = ctrl;
 			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
+#endif
+		}
+		uint8_t* GetBitPattern() { return bitPattern_; }
+		void ClearBitPattern() {
+			::memset(bitPattern_, 0x00, BitPatternLen);
 		}
 		void WriteBitPattern() const {
 			::i2c_write_blocking(i2c_default, addr_, bitPatternBuff_, BitPatternLen + 1, false);
@@ -83,8 +92,8 @@ public:
 			WriteCtrl(0xa0 | flag);
 		}
 		// 10.1.9 Entire Display ON (A4h/A5h)
-		void EntireDisplayOn(uint8_t on) const {
-			WriteCtrl(0xa4 | on);
+		void EntireDisplayOn(uint8_t allOnFlag) const {
+			WriteCtrl(0xa4 | allOnFlag);
 		}
 		// 10.1.10 Set Normal/Inverse Display (A6h/A7h)
 		void SetNormalInverseDisplay(uint8_t inverse) const {
@@ -180,7 +189,8 @@ public:
 	Raw raw;
 public:
 	SSD1306(uint8_t addr = 0x3c) : raw(addr) {}
-	void Initialize() const {
+	void Initialize() {
+		raw.AllocBuff();
 		raw.SetDisplayOnOff(0);				// set display off
 		// memory mapping
 		raw.SetMemoryAddressingMode(0);		// set memory address mode: horizontal addressng mode
@@ -194,19 +204,75 @@ public:
 		raw.SetDisplayClockDivideRatioOscillatorFrequency(0, 8);
 											// set display clock divide ratio: div ratio of 1, standard freq 
 		raw.SetPrechargePeriod(1, 15);		// set pre-charge period: Vcc internally generated on our board
-		raw.SetVcomhDeselectLevel(0x30);	// set VCOMH deselect level: 0.83 x Vcc
+		raw.SetVcomhDeselectLevel(0x3);		// set VCOMH deselect level: 0.83 x Vcc
 		raw.SetContrastControl(255);		// set contrast conrol
 		raw.EntireDisplayOn(0);				// set entire display on to follow RAM content
+		raw.SetNormalInverseDisplay(0);		// set normal (not inverted) display
 		raw.ChargePumpSetting(1);			// set charge pump: Vcc internally generated on our board
 		raw.DeactivateScroll();				// deactivate horizontal scrolling if set. This is necessary as memory writes will corrupt if scrolling was enabled
 		raw.SetDisplayOnOff(1);				// turn display on
 	}
-	void Render() {
+	void Refresh() {
 		raw.SetColumnAddress(0, Width - 1);
 		raw.SetPageAddress(0, NumPages - 1);
 		raw.WriteBitPattern();
 	}
+	void SetPixel(int x, int y, bool on);
+	void DrawLine(int x0, int y0, int x1, int y1, bool on);
 };
+
+void SSD1306::SetPixel(int x, int y, bool on)
+{
+	//assert(x >= 0 && x < SSD1306_WIDTH && y >=0 && y < SSD1306_HEIGHT);
+
+	// The calculation to determine the correct bit to set depends on which address
+	// mode we are in. This code assumes horizontal
+
+	// The video ram on the SSD1306 is split up in to 8 rows, one bit per pixel.
+	// Each row is 128 long by 8 pixels high, each byte vertically arranged, so byte 0 is x=0, y=0->7,
+	// byte 1 is x = 1, y=0->7 etc
+
+	// This code could be optimised, but is like this for clarity. The compiler
+	// should do a half decent job optimising it anyway.
+
+	uint8_t* buf = raw.GetBitPattern();
+	int byte_idx = (y / 8) * Width + x;
+	uint8_t byte = buf[byte_idx];
+
+	if (on)
+		byte |=  1 << (y % 8);
+	else
+		byte &= ~(1 << (y % 8));
+
+	buf[byte_idx] = byte;
+}
+
+void SSD1306::DrawLine(int x0, int y0, int x1, int y1, bool on)
+{
+
+	int dx =  abs(x1-x0);
+	int sx = x0<x1 ? 1 : -1;
+	int dy = -abs(y1-y0);
+	int sy = y0<y1 ? 1 : -1;
+	int err = dx+dy;
+	int e2;
+
+	while (true) {
+		SetPixel(x0, y0, on);
+		if (x0 == x1 && y0 == y1)
+			break;
+		e2 = 2*err;
+
+		if (e2 >= dy) {
+			err += dy;
+			x0 += sx;
+		}
+		if (e2 <= dx) {
+			err += dx;
+			y0 += sy;
+		}
+	}
+}
 
 #define ArraySizeOf(x) (sizeof(x) / sizeof(x[0]))
 
@@ -365,6 +431,7 @@ int main()
 	::gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
 	::gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
 	::gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
+#if 0
 	uint8_t cmds[] = {
 		SSD1306_SET_DISP,               // set display off
 		/* memory mapping */
@@ -404,9 +471,27 @@ int main()
 		SSD1306_SET_SCROLL | 0x00,      // deactivate horizontal scrolling if set. This is necessary as memory writes will corrupt if scrolling was enabled
 		SSD1306_SET_DISP | 0x01, // turn display on
 	};
+	printf("----\n");
+	for (int i = 0; i < ArraySizeOf(cmds); i++) {
+		printf("%02x ", cmds[i]);
+	}
 	for (int i = 0; i < ArraySizeOf(cmds); i++) {
 		SSD1306_send_cmd(cmds[i]);
 	}
+	printf("\n");
+#endif
+	SSD1306 oled;
+	oled.Initialize();
+	oled.Refresh();
+	for (int i = 0; i < 3; i++) {
+		oled.raw.EntireDisplayOn(1);
+		::sleep_ms(500);
+		oled.raw.EntireDisplayOn(0);
+		::sleep_ms(500);
+	}
+	oled.DrawLine(0, 0, 100, 30, true);
+	oled.Refresh();
+#if 0
 	// zero the entire display
 	uint8_t buf[SSD1306_BUF_LEN];
 	memset(buf, 0, SSD1306_BUF_LEN);
@@ -419,5 +504,6 @@ int main()
 	}
 	DrawLine(buf, 0, 0, 100, 30, true);
 	render(buf);
+#endif
 	for (;;) ;
 }
