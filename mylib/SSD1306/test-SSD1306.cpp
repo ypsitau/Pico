@@ -11,6 +11,7 @@ int main()
 	::gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
 	SSD1306 oled;
 	oled.Initialize();
+#if 0
 	oled.Refresh();
 	for (int i = 0; i < 3; i++) {
 		oled.Flash(true);
@@ -18,7 +19,24 @@ int main()
 		oled.Flash(false);
 		::sleep_ms(500);
 	}
-	oled.DrawLine(0, 0, 100, 30, true);
-	oled.Refresh();
+#endif
+#if 0
+	for (int x = 0; x < 128; x++) {
+		oled.Clear();
+		for (int i = 0; i < 32; i++) {
+			oled.DrawHLine(x, i * 2, i);
+		}
+		oled.Refresh();
+		::sleep_ms(100);
+	}
+#endif
+	for (int y = 0; y < 64; y++) {
+		oled.Clear();
+		for (int i = 0; i < 64; i++) {
+			oled.DrawVLine(i, y, i);
+		}
+		oled.Refresh();
+		::sleep_ms(100);
+	} while (0);
 	for (;;) ;
 }

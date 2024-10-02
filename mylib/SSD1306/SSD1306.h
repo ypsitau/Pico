@@ -13,29 +13,29 @@
 
 class SSD1306 {
 public:
-	static const int Width = 128;
-	static const int Height = 32;
+	static const int DisplayWidth = 128;
+	static const int DisplayHeight = 64;
 	static const int PageHeight = 8;
-	static const int NumPages = Height / PageHeight;
-	static const int BitPatternLen = NumPages * Width;
+	static const int NumPages = DisplayHeight / PageHeight;
+	static const int BufferLen = NumPages * DisplayWidth;
 public:
 	class Raw {
 	private:
 		uint8_t addr_;
-		uint8_t* bitPatternBuff_;
-		uint8_t* bitPattern_;
+		uint8_t* buffWhole_;
+		uint8_t* buff_;
 	public:
-		Raw(uint8_t addr) : addr_(addr), bitPatternBuff_(nullptr), bitPattern_(nullptr) {}
+		Raw(uint8_t addr) : addr_(addr), buffWhole_(nullptr), buff_(nullptr) {}
 		~Raw() {
-			::free(bitPatternBuff_);
+			::free(buffWhole_);
 		}
 		void AllocBuff() {
-			bitPatternBuff_ = reinterpret_cast<uint8_t*>(::malloc(BitPatternLen + 1));
-			bitPatternBuff_[0] = 
+			buffWhole_ = reinterpret_cast<uint8_t*>(::malloc(BufferLen + 1));
+			buffWhole_[0] = 
 				(0b0 << 7) |	// Co = 0
 				(0b1 << 6);		// D/C# = 1
-			bitPattern_ = bitPatternBuff_ + 1;
-			ClearBitPattern();
+			buff_ = buffWhole_ + 1;
+			FillBuffer(0x00);
 		}
 		uint8_t GetAddr() const { return addr_; }
 		void WriteCtrl(uint8_t ctrl) const {
@@ -46,12 +46,13 @@ public:
 			buff[1] = ctrl;
 			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
 		}
-		uint8_t* GetBitPattern() { return bitPattern_; }
-		void ClearBitPattern() {
-			::memset(bitPattern_, 0x00, BitPatternLen);
-		}
-		void WriteBitPattern() const {
-			::i2c_write_blocking(i2c_default, addr_, bitPatternBuff_, BitPatternLen + 1, false);
+		uint8_t* GetPointer() { return buff_; }
+		uint8_t* GetPointer(int x) { return buff_ + x; }
+		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * DisplayWidth + x; }
+		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * DisplayWidth + x; }
+		void FillBuffer(uint8_t data) { ::memset(buff_, data, BufferLen); }
+		void WriteBuffer() const {
+			::i2c_write_blocking(i2c_default, addr_, buffWhole_, BufferLen + 1, false);
 		}
 public:
 		// 10.1 Fundamental Command
@@ -196,7 +197,7 @@ public:
 		raw.SetMemoryAddressingMode(0);		// set memory address mode: horizontal addressng mode
 		raw.SetDisplayStartLine(0);			// set display start line to 0
 		raw.SetSegmentRemap(1);				// set segment re-map, column address 127 is mapped to SEG0
-		raw.SetMultiplexRatio(Height - 1);	// set multiplex ratio: Display height - 1
+		raw.SetMultiplexRatio(DisplayHeight - 1);	// set multiplex ratio: Display height - 1
 		raw.SetCOMOutputScanDirection(1);	// set COM (common) output scan direction. Scan from bottom up, COM[N-1] to COM0
 		raw.SetDisplayOffset(0);			// set display offset: no offset
 		raw.SetCOMPinsHardwareConfiguration(0, 0);
@@ -213,13 +214,24 @@ public:
 		raw.SetDisplayOnOff(1);				// turn display on
 	}
 	void Refresh() {
-		raw.SetColumnAddress(0, Width - 1);
+		raw.SetColumnAddress(0, DisplayWidth - 1);
 		raw.SetPageAddress(0, NumPages - 1);
-		raw.WriteBitPattern();
+		raw.WriteBuffer();
 	}
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
-	void PutPixel(int x, int y, bool on);
-	void DrawLine(int x0, int y0, int x1, int y1, bool on);
+	void Clear() { raw.FillBuffer(0x00); }
+	void DrawPixel(int x, int y) { *raw.GetPointer(x, y) |= 1 << (y & 0b111); }
+	void ErasePixel(int x, int y) { *raw.GetPointer(x, y) &= ~(1 << (y & 0b111)); }
+	void DrawHLine(int x, int y, int width);
+	void EraseHLine(int x, int y, int width);
+	void DrawVLine(int x, int y, int height);
+	void EraseVLine(int x, int y, int height);
+	void DrawLine(int x0, int y0, int x1, int y1);
+	void EraseLine(int x0, int y0, int x1, int y1);
+private:
+	static void SortPair(int v1, int v2, int* pMin, int* pMax);
+	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
+	static bool AdjustCoord(int* pV, int* pDist, int vLimit);
 };
 
 #endif
