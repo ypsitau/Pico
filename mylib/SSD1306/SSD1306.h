@@ -1,5 +1,4 @@
 //==============================================================================
-// 128x64 Dot Matrix
 // OLED/PLED Segment/Common Driver with Controller
 //==============================================================================
 #ifndef SSD1306_H
@@ -13,11 +12,13 @@
 
 class SSD1306 {
 public:
+	static const int BufferWidth = 128;
+	static const int BufferHeight = 32;
 	static const int DisplayWidth = 128;
-	static const int DisplayHeight = 64;
+	static const int DisplayHeight = 32;
 	static const int PageHeight = 8;
 	static const int NumPages = DisplayHeight / PageHeight;
-	static const int BufferLen = NumPages * DisplayWidth;
+	static const int BufferLen = NumPages * BufferWidth;
 public:
 	class Raw {
 	private:
@@ -48,8 +49,8 @@ public:
 		}
 		uint8_t* GetPointer() { return buff_; }
 		uint8_t* GetPointer(int x) { return buff_ + x; }
-		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * DisplayWidth + x; }
-		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * DisplayWidth + x; }
+		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * BufferWidth + x; }
+		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * BufferWidth + x; }
 		void FillBuffer(uint8_t data) { ::memset(buff_, data, BufferLen); }
 		void WriteBuffer() const {
 			::i2c_write_blocking(i2c_default, addr_, buffWhole_, BufferLen + 1, false);
@@ -190,34 +191,8 @@ public:
 	Raw raw;
 public:
 	SSD1306(uint8_t addr = 0x3c) : raw(addr) {}
-	void Initialize() {
-		raw.AllocBuff();
-		raw.SetDisplayOnOff(0);				// set display off
-		// memory mapping
-		raw.SetMemoryAddressingMode(0);		// set memory address mode: horizontal addressng mode
-		raw.SetDisplayStartLine(0);			// set display start line to 0
-		raw.SetSegmentRemap(1);				// set segment re-map, column address 127 is mapped to SEG0
-		raw.SetMultiplexRatio(DisplayHeight - 1);	// set multiplex ratio: Display height - 1
-		raw.SetCOMOutputScanDirection(1);	// set COM (common) output scan direction. Scan from bottom up, COM[N-1] to COM0
-		raw.SetDisplayOffset(0);			// set display offset: no offset
-		raw.SetCOMPinsHardwareConfiguration(0, 0);
-											// set COM (common) pins hardware configuration. Board specific magic number.
-		raw.SetDisplayClockDivideRatioOscillatorFrequency(0, 8);
-											// set display clock divide ratio: div ratio of 1, standard freq 
-		raw.SetPrechargePeriod(1, 15);		// set pre-charge period: Vcc internally generated on our board
-		raw.SetVcomhDeselectLevel(0x3);		// set VCOMH deselect level: 0.83 x Vcc
-		raw.SetContrastControl(255);		// set contrast conrol
-		raw.EntireDisplayOn(0);				// set entire display on to follow RAM content
-		raw.SetNormalInverseDisplay(0);		// set normal (not inverted) display
-		raw.ChargePumpSetting(1);			// set charge pump: Vcc internally generated on our board
-		raw.DeactivateScroll();				// deactivate horizontal scrolling if set. This is necessary as memory writes will corrupt if scrolling was enabled
-		raw.SetDisplayOnOff(1);				// turn display on
-	}
-	void Refresh() {
-		raw.SetColumnAddress(0, DisplayWidth - 1);
-		raw.SetPageAddress(0, NumPages - 1);
-		raw.WriteBuffer();
-	}
+	void Initialize();
+	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
 	void Clear() { raw.FillBuffer(0x00); }
 	void DrawPixel(int x, int y) { *raw.GetPointer(x, y) |= 1 << (y & 0b111); }

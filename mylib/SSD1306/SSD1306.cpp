@@ -1,6 +1,38 @@
 #include <stdio.h>
 #include "SSD1306.h"
 
+void SSD1306::Initialize()
+{
+	raw.AllocBuff();
+	raw.SetDisplayOnOff(0);				// set display off
+	// memory mapping
+	raw.SetMemoryAddressingMode(0);		// set memory address mode: horizontal addressng mode
+	raw.SetDisplayStartLine(0);			// set display start line to 0
+	raw.SetSegmentRemap(1);				// set segment re-map, column address 127 is mapped to SEG0
+	raw.SetMultiplexRatio(DisplayHeight - 1);	// set multiplex ratio: Display height - 1
+	raw.SetCOMOutputScanDirection(1);	// set COM (common) output scan direction. Scan from bottom up, COM[N-1] to COM0
+	raw.SetDisplayOffset(0);			// set display offset: no offset
+	raw.SetCOMPinsHardwareConfiguration(0, 0);
+										// set COM (common) pins hardware configuration. Board specific magic number.
+	raw.SetDisplayClockDivideRatioOscillatorFrequency(0, 8);
+										// set display clock divide ratio: div ratio of 1, standard freq 
+	raw.SetPrechargePeriod(1, 15);		// set pre-charge period: Vcc internally generated on our board
+	raw.SetVcomhDeselectLevel(0x3);		// set VCOMH deselect level: 0.83 x Vcc
+	raw.SetContrastControl(255);		// set contrast conrol
+	raw.EntireDisplayOn(0);				// set entire display on to follow RAM content
+	raw.SetNormalInverseDisplay(0);		// set normal (not inverted) display
+	raw.ChargePumpSetting(1);			// set charge pump: Vcc internally generated on our board
+	raw.DeactivateScroll();				// deactivate horizontal scrolling if set. This is necessary as memory writes will corrupt if scrolling was enabled
+	raw.SetDisplayOnOff(1);				// turn display on
+}
+
+void SSD1306::Refresh()
+{
+	raw.SetColumnAddress(0, BufferWidth - 1);
+	raw.SetPageAddress(0, NumPages - 1);
+	raw.WriteBuffer();
+}
+
 void SSD1306::DrawHLine(int x, int y, int width)
 {
 	if (!CheckCoord(y, DisplayHeight) || !AdjustCoord(&x, &width, DisplayWidth)) return;
@@ -20,9 +52,9 @@ void SSD1306::EraseHLine(int x, int y, int width)
 void SSD1306::DrawVLine(int x, int y, int height)
 {
 	if (!CheckCoord(x, DisplayWidth) || !AdjustCoord(&y, &height, DisplayHeight)) return;
-	uint64_t bits = (-1LL << y) & ~(-1LL << (y + height));
+	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
 	uint8_t* p = raw.GetPointer(x);
-	for (int i = 0; i < NumPages; i++, p += DisplayWidth, bits >>= 8) {
+	for (int i = 0; i < NumPages; i++, p += BufferWidth, bits >>= 8) {
 		*p |= static_cast<uint8_t>(bits & 0b11111111);
 	} 
 }
