@@ -76,7 +76,7 @@ int main()
 		oled.Clear();
 		oled.DrawRectFill(127, 31, -i * 4, -i);
 		oled.Refresh();
-		::sleep_ms(100);
+		::sleep_ms(300);
 	} while (0);
 #endif
 	for (;;) ;
