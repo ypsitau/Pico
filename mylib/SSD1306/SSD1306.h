@@ -207,22 +207,38 @@ public:
 	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
 	void Clear(uint8_t data = 0x00) { raw.FillBuffer(data); }
-	void DrawPixel(int x, int y) { *raw.GetPointer(x, y) |= 1 << (y & 0b111); }
-	void DrawHLine(int x, int y, int width);
-	void DrawVLine(int x, int y, int height);
-	void DrawLine(int x0, int y0, int x1, int y1);
-	void ErasePixel(int x, int y) { *raw.GetPointer(x, y) &= ~(1 << (y & 0b111)); }
-	void EraseHLine(int x, int y, int width);
-	void EraseVLine(int x, int y, int height);
-	void EraseLine(int x0, int y0, int x1, int y1);
-	void InvertPixel(int x, int y) { *raw.GetPointer(x, y) ^= 1 << (y & 0b111); }
-	void InvertHLine(int x, int y, int width);
-	void InvertVLine(int x, int y, int height);
-	void InvertLine(int x0, int y0, int x1, int y1);
 private:
+	template<class Logic> void DrawPixelT(int x, int y) {
+		uint8_t* p = raw.GetPointer(x, y);
+		*p = Logic()(*p, 1 << (y & 0b111));
+	}
+	template<class Logic> void DrawHLineT_NoAdjust(int x, int y, int width);
+	template<class Logic> void DrawVLineT_NoAdjust(int x, int y, int height);
 	template<class Logic> void DrawHLineT(int x, int y, int width);
 	template<class Logic> void DrawVLineT(int x, int y, int width);
 	template<class Logic> void DrawLineT(int x0, int y0, int x1, int y1);
+	template<class Logic> void DrawRectT(int x, int y, int width, int height);
+	template<class Logic> void DrawRectFillT(int x, int y, int width, int height);
+public:
+	void DrawPixel(int x, int y) { DrawPixelT<Logic_Draw>(x, y); }
+	void DrawHLine(int x, int y, int width);
+	void DrawVLine(int x, int y, int height);
+	void DrawLine(int x0, int y0, int x1, int y1);
+	void DrawRect(int x, int y, int width, int height);
+	void DrawRectFill(int x, int y, int width, int height);
+	void ErasePixel(int x, int y) { DrawPixelT<Logic_Erase>(x, y); }
+	void EraseHLine(int x, int y, int width);
+	void EraseVLine(int x, int y, int height);
+	void EraseLine(int x0, int y0, int x1, int y1);
+	void EraseRect(int x, int y, int width, int height);
+	void EraseRectFill(int x, int y, int width, int height);
+	void InvertPixel(int x, int y) { DrawPixelT<Logic_Invert>(x, y); }
+	void InvertHLine(int x, int y, int width);
+	void InvertVLine(int x, int y, int height);
+	void InvertLine(int x0, int y0, int x1, int y1);
+	void InvertRect(int x, int y, int width, int height);
+	void InvertRectFill(int x, int y, int width, int height);
+private:
 	static void SortPair(int v1, int v2, int* pMin, int* pMax);
 	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
 	static bool AdjustCoord(int* pV, int* pDist, int vLimit);

@@ -33,22 +33,34 @@ void SSD1306::Refresh()
 	raw.WriteBuffer();
 }
 
-template<class Logic> void SSD1306::DrawHLineT(int x, int y, int width)
+template<class Logic> void SSD1306::DrawHLineT_NoAdjust(int x, int y, int width)
 {
-	if (!CheckCoord(y, DisplayHeight) || !AdjustCoord(&x, &width, DisplayWidth)) return;
 	uint8_t data = 0b00000001 << (y & 0b111);
 	uint8_t* p = raw.GetPointer(x, y);
 	for (int i = 0; i < width; i++, p++) *p = Logic()(*p, data);
 }
 
+template<class Logic> void SSD1306::DrawVLineT_NoAdjust(int x, int y, int height)
+{
+	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
+	int page;
+	uint8_t* pTop = raw.GetPointer(x, y, &page);
+	bits >>= page * 8;
+	for (uint8_t* p = pTop; page < NumPages && bits; page++, p += BufferWidth, bits >>= 8) {
+		*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
+	}
+}
+
+template<class Logic> void SSD1306::DrawHLineT(int x, int y, int width)
+{
+	if (!CheckCoord(y, DisplayHeight) || !AdjustCoord(&x, &width, DisplayWidth)) return;
+	DrawHLineT_NoAdjust<Logic>(x, y, width);
+}
+
 template<class Logic> void SSD1306::DrawVLineT(int x, int y, int height)
 {
 	if (!CheckCoord(x, DisplayWidth) || !AdjustCoord(&y, &height, DisplayHeight)) return;
-	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
-	uint8_t* p = raw.GetPointer(x);
-	for (int i = 0; i < NumPages; i++, p += BufferWidth, bits >>= 8) {
-		*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
-	} 
+	DrawVLineT_NoAdjust<Logic>(x, y, height);
 }
 
 template<class Logic> void SSD1306::DrawLineT(int x0, int y0, int x1, int y1)
@@ -58,27 +70,77 @@ template<class Logic> void SSD1306::DrawLineT(int x0, int y0, int x1, int y1)
 	} else if (y0 == y1) {
 		DrawHLineT<Logic>(x0, y0, x1 - x0);
 	} else {
-		int dx =  abs(x1-x0);
-		int sx = x0<x1 ? 1 : -1;
-		int dy = -abs(y1-y0);
-		int sy = y0<y1 ? 1 : -1;
-		int err = dx+dy;
-		int e2;
-
-		while (true) {
-			DrawPixel(x0, y0);
-			if (x0 == x1 && y0 == y1)
-				break;
-			e2 = 2*err;
-
-			if (e2 >= dy) {
+		//int dx = abs(x1 - x0);
+		//int sx = (x0 < x1)? 1 : -1;
+		//int dy = -abs(y1 - y0);
+		//int sy = (y0 < y1)? 1 : -1;
+		int dx, dy, sx, sy;
+		if (x0 < x1) {
+			dx = x1 - x0;
+			sx = +1;
+		} else {
+			dx = x0 - x1;
+			sx = -1;
+		}
+		if (y0 < y1) {
+			dy = y0 - y1;
+			sy = +1;
+		} else {
+			dy = y1 - y0;
+			sy = -1;
+		}
+		int err = dx + dy;
+		int x = x0, y = y0;
+		for (;;) {
+			DrawPixelT<Logic>(x, y);
+			if (x == x1 && y == y1) break;
+			int err2 = 2 * err;
+			if (err2 >= dy) {
 				err += dy;
-				x0 += sx;
+				x += sx;
 			}
-			if (e2 <= dx) {
+			if (err2 <= dx) {
 				err += dx;
-				y0 += sy;
+				y += sy;
 			}
+		}
+	}
+}
+
+template<class Logic> void SSD1306::DrawRectT(int x, int y, int width, int height)
+{
+	int xLeft = x, xRight = x + width -1;
+	int yTop = y, yBottom = y + height - 1;
+	int xLeftAdjust = xLeft, widthAdjust = width;
+	int yTopAdjust = yTop, heightAdjust = height;
+	if (AdjustCoord(&xLeftAdjust, &widthAdjust, DisplayWidth)) {
+		if (CheckCoord(yTop, DisplayHeight)) {
+			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yTop, widthAdjust);
+		}
+		if (CheckCoord(yBottom, DisplayHeight)) {
+			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yBottom, widthAdjust);
+		}
+	}
+	if (AdjustCoord(&yTopAdjust, &heightAdjust, DisplayHeight)) {
+		if (CheckCoord(xLeft, DisplayWidth)) {
+			DrawVLineT_NoAdjust<Logic>(xLeft, yTopAdjust, heightAdjust);
+		}
+		if (CheckCoord(xRight, DisplayWidth)) {
+			DrawVLineT_NoAdjust<Logic>(xRight, yTopAdjust, heightAdjust);
+		}
+	}
+}
+
+template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int height)
+{
+	if (!AdjustCoord(&x, &width, DisplayWidth) || !AdjustCoord(&y, &height, DisplayHeight)) return;
+	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
+	int page;
+	uint8_t* pTop = raw.GetPointer(x, y, &page);
+	bits >>= page * 8;
+	for (int i = 0; i < width; i++, pTop++) {
+		for (uint8_t* p = pTop; page < NumPages && bits; page++, p += BufferWidth, bits >>= 8) {
+			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 		}
 	}
 }
@@ -98,6 +160,16 @@ void SSD1306::DrawLine(int x0, int y0, int x1, int y1)
 	DrawLineT<Logic_Draw>(x0, y0, x1, y1);
 }
 
+void SSD1306::DrawRect(int x, int y, int width, int height)
+{
+	DrawRectT<Logic_Draw>(x, y, width, height);
+}
+
+void SSD1306::DrawRectFill(int x, int y, int width, int height)
+{
+	DrawRectFillT<Logic_Draw>(x, y, width, height);
+}
+
 void SSD1306::EraseHLine(int x, int y, int width)
 {
 	DrawHLineT<Logic_Erase>(x, y, width);
@@ -113,6 +185,16 @@ void SSD1306::EraseLine(int x0, int y0, int x1, int y1)
 	DrawLineT<Logic_Erase>(x0, y0, x1, y1);
 }
 
+void SSD1306::EraseRect(int x, int y, int width, int height)
+{
+	DrawRectT<Logic_Erase>(x, y, width, height);
+}
+
+void SSD1306::EraseRectFill(int x, int y, int width, int height)
+{
+	DrawRectFillT<Logic_Erase>(x, y, width, height);
+}
+
 void SSD1306::InvertHLine(int x, int y, int width)
 {
 	DrawHLineT<Logic_Invert>(x, y, width);
@@ -126,6 +208,16 @@ void SSD1306::InvertVLine(int x, int y, int height)
 void SSD1306::InvertLine(int x0, int y0, int x1, int y1)
 {
 	DrawLineT<Logic_Invert>(x0, y0, x1, y1);
+}
+
+void SSD1306::InvertRect(int x, int y, int width, int height)
+{
+	DrawRectT<Logic_Invert>(x, y, width, height);
+}
+
+void SSD1306::InvertRectFill(int x, int y, int width, int height)
+{
+	DrawRectFillT<Logic_Invert>(x, y, width, height);
 }
 
 void SSD1306::SortPair(int v1, int v2, int* pMin, int* pMax)
