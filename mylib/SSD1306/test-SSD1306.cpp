@@ -41,15 +41,33 @@ int main()
 		::sleep_ms(100);
 	}
 #endif
-#if 1
+#if 0
 	for (int y = 0; y < 32; y++) {
 		oled.Clear();
 		for (int i = 0; i < 32; i++) {
-			oled.DrawVLine(i * 3, y, i);
+			oled.DrawVLine(i, y, i);
+			oled.DrawVLine(i + 32 * 1, 31 - y, -i);
+			oled.DrawVLine(i + 32 * 2, y, i);
+			oled.DrawVLine(i + 32 * 3, 31 - y, -i);
 		}
 		oled.Refresh();
 		::sleep_ms(100);
 	} while (0);
+#endif
+#if 1
+	for (int cnt = 0; cnt < 4; cnt++) {
+		for (int y = 0; y < 32; y++) {
+			oled.Clear();
+			for (int i = 0; i < 32; i++) {
+				oled.InvertVLine(i, y, i);
+				oled.InvertVLine(i, 31 - y, -i);
+				oled.InvertVLine(i + 32 * 2, y, i);
+				oled.InvertVLine(i + 32 * 2, 31 - y, -i);
+			}
+			oled.Refresh();
+			::sleep_ms(100);
+		}
+	}
 #endif
 	for (;;) ;
 }

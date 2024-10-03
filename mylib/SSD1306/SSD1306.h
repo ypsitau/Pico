@@ -20,6 +20,18 @@ public:
 	static const int NumPages = DisplayHeight / PageHeight;
 	static const int BufferLen = NumPages * BufferWidth;
 public:
+	class Logic_Draw {
+	public:
+		uint8_t operator()(uint8_t v1, uint8_t v2) { return v1 | v2; }
+	};
+	class Logic_Erase {
+	public:
+		uint8_t operator()(uint8_t v1, uint8_t v2) { return v1 & ~v2; }
+	};
+	class Logic_Invert {
+	public:
+		uint8_t operator()(uint8_t v1, uint8_t v2) { return v1 ^ v2; }
+	};
 	class Raw {
 	private:
 		uint8_t addr_;
@@ -194,16 +206,23 @@ public:
 	void Initialize();
 	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
-	void Clear() { raw.FillBuffer(0x00); }
+	void Clear(uint8_t data = 0x00) { raw.FillBuffer(data); }
 	void DrawPixel(int x, int y) { *raw.GetPointer(x, y) |= 1 << (y & 0b111); }
-	void ErasePixel(int x, int y) { *raw.GetPointer(x, y) &= ~(1 << (y & 0b111)); }
 	void DrawHLine(int x, int y, int width);
-	void EraseHLine(int x, int y, int width);
 	void DrawVLine(int x, int y, int height);
-	void EraseVLine(int x, int y, int height);
 	void DrawLine(int x0, int y0, int x1, int y1);
+	void ErasePixel(int x, int y) { *raw.GetPointer(x, y) &= ~(1 << (y & 0b111)); }
+	void EraseHLine(int x, int y, int width);
+	void EraseVLine(int x, int y, int height);
 	void EraseLine(int x0, int y0, int x1, int y1);
+	void InvertPixel(int x, int y) { *raw.GetPointer(x, y) ^= 1 << (y & 0b111); }
+	void InvertHLine(int x, int y, int width);
+	void InvertVLine(int x, int y, int height);
+	void InvertLine(int x0, int y0, int x1, int y1);
 private:
+	template<class Logic> void DrawHLineT(int x, int y, int width);
+	template<class Logic> void DrawVLineT(int x, int y, int width);
+	template<class Logic> void DrawLineT(int x0, int y0, int x1, int y1);
 	static void SortPair(int v1, int v2, int* pMin, int* pMax);
 	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
 	static bool AdjustCoord(int* pV, int* pDist, int vLimit);
