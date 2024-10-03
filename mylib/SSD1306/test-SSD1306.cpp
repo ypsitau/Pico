@@ -56,7 +56,7 @@ int main()
 		}
 	}
 #endif
-#if 1
+#if 0
 	for (int cnt = 0; cnt < 2; cnt++) {
 		for (int y = 0; y < 32; y++) {
 			oled.Clear();
@@ -70,6 +70,14 @@ int main()
 			::sleep_ms(500);
 		}
 	}
+#endif
+#if 1
+	for (int i = 0; i < 32; i++) {
+		oled.Clear();
+		oled.DrawRectFill(127, 31, -i * 4, -i);
+		oled.Refresh();
+		::sleep_ms(100);
+	} while (0);
 #endif
 	for (;;) ;
 }

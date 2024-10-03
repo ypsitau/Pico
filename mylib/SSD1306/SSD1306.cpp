@@ -138,8 +138,9 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 	int page;
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
-	for (int i = 0; i < width; i++, pTop++) {
-		for (uint8_t* p = pTop; page < NumPages && bits; page++, p += BufferWidth, bits >>= 8) {
+	for ( ; page < NumPages && bits; page++, pTop += BufferWidth, bits >>= 8) {
+		uint8_t* p = pTop;
+		for (int i = 0; i < width; i++, p++) {
 			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 		}
 	}
