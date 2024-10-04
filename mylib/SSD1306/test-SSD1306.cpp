@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include "SSD1306.h"
 
+void SetupStage(SSD1306& oled, int iCase)
+{
+	oled.Clear((iCase == 1)? 0xff : 0x00);
+	if (iCase == 2) oled.DrawRectFill(16, 24, 96, 16);
+}
+
 int main()
 {
 	::stdio_init_all();
@@ -11,7 +17,8 @@ int main()
 	::gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
 	SSD1306 oled;
 	oled.Initialize();
-#if 0
+#if 1
+	// SSD1306::Flash()
 	for (int i = 0; i < 3; i++) {
 		oled.Flash(true);
 		::sleep_ms(500);
@@ -19,65 +26,88 @@ int main()
 		::sleep_ms(500);
 	}
 #endif
-#if 0
-	//for (int x = 0; x < 16; x++) {
-	//	for (int y = 0; y < 16; y++) {
-	//		oled.DrawPixel(x, y);
-	//	}
-	//}
-	for (int i = 0; i < 16; i++) {
-		oled.DrawPixel(i, i);
-	}
-	//oled.DrawLine(0, 0, 32, 32);
-	oled.Refresh();
-#endif
-#if 0
-	for (int x = 0; x < 128; x++) {
-		oled.Clear();
-		for (int i = 0; i < 32; i++) {
-			oled.DrawHLine(x, i, i);
+#if 1
+	// SSD1306::DrawPixel()/ErasePixel()/InvertPixel()
+	for (int iCase = 0; iCase < 3; iCase++) {
+		SetupStage(oled, iCase);
+		int x = 40, y = 16;
+		int xDir = +1, yDir = +1;
+		for (int i = 0; i < 1000; i++) {
+			switch (iCase) {
+			case 0: oled.DrawPixel(x, y); break; 
+			case 1: oled.ErasePixel(x, y); break;
+			case 2: oled.InvertPixel(x, y); break;
+			default: break;
+			}
+			if (x + xDir < 0) xDir = +1;
+			if (x + xDir >= oled.GetWidth()) xDir = -1;
+			if (y + yDir < 0) yDir = +1;
+			if (y + yDir >= oled.GetHeight()) yDir = -1;
+			x += xDir, y += yDir;
+			if (i % 10 == 0) oled.Refresh();
 		}
-		oled.Refresh();
-		::sleep_ms(100);
-	}
+		::sleep_ms(1000);
+	} while (0);
 #endif
-#if 0
-	for (int cnt = 0; cnt < 2; cnt++) {
-		for (int y = 0; y < 32; y++) {
-			oled.Clear();
-			for (int i = 0; i < 32; i++) {
-				oled.DrawVLine(i, y, i);
-				oled.DrawVLine(i + 32 * 1, 31 - y, -i);
-				oled.DrawVLine(i + 32 * 2, y, i);
-				oled.DrawVLine(i + 32 * 3, 31 - y, -i);
+#if 1
+	// SSD1306::DrawHLine()/EraseHLine()/InvertHLine()
+	for (int iCase = 0; iCase < 3; iCase++) {
+		for (int x = -64; x < oled.GetWidth(); x++) {
+			SetupStage(oled, iCase);
+			for (int i = 0; i < oled.GetHeight(); i++) {
+				switch (iCase) {
+				case 0: oled.DrawHLine(x, i, i); break;
+				case 1: oled.EraseHLine(x, i, i); break;
+				case 2: oled.InvertHLine(x, i, i); break;
+				default: break;
+				}
+				
 			}
 			oled.Refresh();
-			::sleep_ms(500);
-		}
-	}
-#endif
-#if 0
-	for (int cnt = 0; cnt < 2; cnt++) {
-		for (int y = 0; y < 32; y++) {
-			oled.Clear();
-			for (int i = 0; i < 32; i++) {
-				oled.InvertVLine(i, y, i);
-				oled.InvertVLine(i, 31 - y, -i);
-				oled.InvertVLine(i + 32 * 2, y, i);
-				oled.InvertVLine(i + 32 * 2, 31 - y, -i);
-			}
-			oled.Refresh();
-			::sleep_ms(500);
 		}
 	}
 #endif
 #if 1
-	for (int i = 0; i < 32; i++) {
+	// SSD1306::DrawVLine()/EraseVLine()/InvertVLine()
+	for (int iCase = 0; iCase < 3; iCase++) {
+		for (int y = -64; y < oled.GetHeight(); y++) {
+			SetupStage(oled, iCase);
+			for (int i = 0; i < oled.GetHeight(); i++) {
+				switch (iCase) {
+				case 0:
+					oled.DrawVLine(i, y, i);
+					oled.DrawVLine(i + oled.GetHeight() * 1, oled.GetHeight() - y - 1, -i);
+					break;
+				case 1:
+					oled.EraseVLine(i, y, i);
+					oled.EraseVLine(i + oled.GetHeight() * 1, oled.GetHeight() - y - 1, -i);
+					break;
+				case 2:
+					oled.InvertVLine(i, y, i);
+					oled.InvertVLine(i + oled.GetHeight() * 1, oled.GetHeight() - y - 1, -i);
+					break;
+				default:
+					break;
+				}
+			}
+			oled.Refresh();
+		}
+	}
+#endif
+#if 0
+	// SSD1306::DrawRectFill()
+	for (int i = 0; i < oled.GetHeight(); i++) {
 		oled.Clear();
-		oled.DrawRectFill(127, 31, -i * 4, -i);
+		oled.DrawRectFill(0, 0, i * 2, i);
 		oled.Refresh();
-		::sleep_ms(300);
-	} while (0);
+		::sleep_ms(100);
+	}
+	for (int i = 0; i < oled.GetHeight(); i++) {
+		oled.Clear();
+		oled.DrawRectFill(oled.GetWidth() - 1, oled.GetHeight() - 1, -i * 2, -i);
+		oled.Refresh();
+		::sleep_ms(100);
+	}
 #endif
 	for (;;) ;
 }

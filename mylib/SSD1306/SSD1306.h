@@ -27,26 +27,26 @@ public:
 	};
 	class Raw {
 	private:
-		static const int displayWidth_ = 128;
-		int displayHeight_;
-		static const int pageHeight_ = 8;
+		static const int width_ = 128;
+		int height_;
+		static const int heightPerPage_ = 8;
 	private:
 		uint8_t addr_;
 		uint8_t* buffWhole_;
 		uint8_t* buff_;
 	public:
-		Raw(uint8_t addr, int displayHeight) :
-				addr_(addr), buffWhole_(nullptr), buff_(nullptr), displayHeight_(displayHeight) {}
+		Raw(uint8_t addr, int height) :
+				addr_(addr), buffWhole_(nullptr), buff_(nullptr), height_(height) {}
 		~Raw() {
 			::free(buffWhole_);
 		}
 	public:
 		uint8_t GetAddr() const { return addr_; }
-		int GetDisplayWidth() const { return displayWidth_; }
-		int GetDisplayHeight() const { return displayHeight_; }
-		int GetPageHeight() const { return pageHeight_; }
-		int GetNumPages() const { return displayHeight_ / pageHeight_; }
-		int GetBufferLen() const { return GetNumPages() * displayWidth_; }
+		int GetWidth() const { return width_; }
+		int GetHeight() const { return height_; }
+		int GetHeightPerPage() const { return heightPerPage_; }
+		int GetNumPages() const { return height_ / heightPerPage_; }
+		int GetBufferLen() const { return GetNumPages() * width_; }
 	public:
 		void AllocBuff() {
 			buffWhole_ = reinterpret_cast<uint8_t*>(::malloc(GetBufferLen() + 1));
@@ -66,8 +66,8 @@ public:
 		}
 		uint8_t* GetPointer() { return buff_; }
 		uint8_t* GetPointer(int x) { return buff_ + x; }
-		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * displayWidth_ + x; }
-		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * displayWidth_ + x; }
+		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * width_ + x; }
+		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * width_ + x; }
 		void FillBuffer(uint8_t data) { ::memset(buff_, data, GetBufferLen()); }
 		void WriteBuffer() const {
 			::i2c_write_blocking(i2c_default, addr_, buffWhole_, GetBufferLen() + 1, false);
@@ -210,9 +210,9 @@ public:
 	SSD1306(uint8_t addr = 0x3c, bool highResoFlag = true) : raw(addr, highResoFlag? 64 : 32) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
-	int GetDisplayWidth() const { return raw.GetDisplayWidth(); }
-	int GetDisplayHeight() const { return raw.GetDisplayHeight(); }
-	int GetPageHeight() const { return raw.GetPageHeight(); }
+	int GetWidth() const { return raw.GetWidth(); }
+	int GetHeight() const { return raw.GetHeight(); }
+	int GetHeightPerPage() const { return raw.GetHeightPerPage(); }
 	int GetNumPages() const { return raw.GetNumPages(); }
 	int GetBufferLen() const { return raw.GetBufferLen(); }
 public:

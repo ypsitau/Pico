@@ -12,10 +12,10 @@ void SSD1306::Initialize()
 	raw.SetMemoryAddressingMode(0);					// Set Memory Addressing Mode = 0: Horizontal Addressing Mode
 	raw.SetDisplayStartLine(0);						// Set Display Start Line = 0
 	raw.SetSegmentRemap(1);							// Set Segment Re-map = 1: column address 127 is mapped to SEG0
-	raw.SetMultiplexRatio(GetDisplayHeight() - 1);	// Set Multiplex Ratio = GetDisplayHeight() - 1
+	raw.SetMultiplexRatio(GetHeight() - 1);	// Set Multiplex Ratio = GetHeight() - 1
 	raw.SetCOMOutputScanDirection(1);				// Set COM Output Scan Direction = 1: remapped mode. Scan from COM[N-1] to COM0
 	raw.SetDisplayOffset(0);						// Set Display Offset = 0
-	raw.SetCOMPinsHardwareConfiguration((GetDisplayHeight() == 64)? 1 : 0, 0);
+	raw.SetCOMPinsHardwareConfiguration((GetHeight() == 64)? 1 : 0, 0);
 													// Set COM Pins Hardware Configuration
 													//   A[4] = 0: Sequential COM pin configuration
 													//          1: Alternative COM pin configuration
@@ -38,7 +38,7 @@ void SSD1306::Initialize()
 
 void SSD1306::Refresh()
 {
-	raw.SetColumnAddress(0, GetDisplayWidth() - 1);
+	raw.SetColumnAddress(0, GetWidth() - 1);
 	raw.SetPageAddress(0, GetNumPages() - 1);
 	raw.WriteBuffer();
 }
@@ -52,24 +52,24 @@ template<class Logic> void SSD1306::DrawHLineT_NoAdjust(int x, int y, int width)
 
 template<class Logic> void SSD1306::DrawVLineT_NoAdjust(int x, int y, int height)
 {
-	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
+	uint64_t bits = (-1LL << y) & ~(-1LL << (y + height));
 	int page;
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
-	for (uint8_t* p = pTop; page < GetNumPages() && bits; page++, p += GetDisplayWidth(), bits >>= 8) {
+	for (uint8_t* p = pTop; page < GetNumPages() && bits; page++, p += GetWidth(), bits >>= 8) {
 		*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 	}
 }
 
 template<class Logic> void SSD1306::DrawHLineT(int x, int y, int width)
 {
-	if (!CheckCoord(y, GetDisplayHeight()) || !AdjustCoord(&x, &width, GetDisplayWidth())) return;
+	if (!CheckCoord(y, GetHeight()) || !AdjustCoord(&x, &width, GetWidth())) return;
 	DrawHLineT_NoAdjust<Logic>(x, y, width);
 }
 
 template<class Logic> void SSD1306::DrawVLineT(int x, int y, int height)
 {
-	if (!CheckCoord(x, GetDisplayWidth()) || !AdjustCoord(&y, &height, GetDisplayHeight())) return;
+	if (!CheckCoord(x, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
 	DrawVLineT_NoAdjust<Logic>(x, y, height);
 }
 
@@ -123,19 +123,19 @@ template<class Logic> void SSD1306::DrawRectT(int x, int y, int width, int heigh
 	int yTop = y, yBottom = y + height - 1;
 	int xLeftAdjust = xLeft, widthAdjust = width;
 	int yTopAdjust = yTop, heightAdjust = height;
-	if (AdjustCoord(&xLeftAdjust, &widthAdjust, GetDisplayWidth())) {
-		if (CheckCoord(yTop, GetDisplayHeight())) {
+	if (AdjustCoord(&xLeftAdjust, &widthAdjust, GetWidth())) {
+		if (CheckCoord(yTop, GetHeight())) {
 			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yTop, widthAdjust);
 		}
-		if (CheckCoord(yBottom, GetDisplayHeight())) {
+		if (CheckCoord(yBottom, GetHeight())) {
 			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yBottom, widthAdjust);
 		}
 	}
-	if (AdjustCoord(&yTopAdjust, &heightAdjust, GetDisplayHeight())) {
-		if (CheckCoord(xLeft, GetDisplayWidth())) {
+	if (AdjustCoord(&yTopAdjust, &heightAdjust, GetHeight())) {
+		if (CheckCoord(xLeft, GetWidth())) {
 			DrawVLineT_NoAdjust<Logic>(xLeft, yTopAdjust, heightAdjust);
 		}
-		if (CheckCoord(xRight, GetDisplayWidth())) {
+		if (CheckCoord(xRight, GetWidth())) {
 			DrawVLineT_NoAdjust<Logic>(xRight, yTopAdjust, heightAdjust);
 		}
 	}
@@ -143,12 +143,12 @@ template<class Logic> void SSD1306::DrawRectT(int x, int y, int width, int heigh
 
 template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int height)
 {
-	if (!AdjustCoord(&x, &width, GetDisplayWidth()) || !AdjustCoord(&y, &height, GetDisplayHeight())) return;
-	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
+	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
+	uint64_t bits = (-1LL << y) & ~(-1LL << (y + height));
 	int page;
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
-	for ( ; page < GetNumPages() && bits; page++, pTop += GetDisplayWidth(), bits >>= 8) {
+	for ( ; page < GetNumPages() && bits; page++, pTop += GetWidth(), bits >>= 8) {
 		uint8_t* p = pTop;
 		for (int i = 0; i < width; i++, p++) {
 			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
