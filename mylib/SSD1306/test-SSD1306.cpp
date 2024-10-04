@@ -1460,10 +1460,13 @@ int main()
 	oled.Clear();
 	oled.Refresh();
 	::sleep_ms(1000);
-	oled.SetFont(font_BMSPA);
-	oled.DrawString(0, 0, "ABCDEFGHIJKLMNOPQRSTU");
-	oled.DrawString(0, 8, "ABCDEFGHIJKLMNOPQRSTU");
-	oled.Refresh();
+	oled.SetFont(font_BMSPA, 2, 3);
+	for (int x = 0; x < 32; x++) {
+		oled.Clear();
+		oled.DrawString(x, 0, "ABCDEFGHIJKLMNOPQRSTU");
+		oled.Refresh();
+		::sleep_ms(200);
+	}
 	for (;;) ;
 #if 0
 	// SSD1306::Flash()

@@ -159,28 +159,48 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 {
 	if (!pFontCur_) return;
-	int width = pFontCur_->info.width, height = pFontCur_->info.height, bytesPerLine = pFontCur_->info.bytesPerLine;
+	int wdFont = pFontCur_->info.width;
+	int htFont = pFontCur_->info.height;
+	int bytesPerLine = pFontCur_->info.bytesPerLine;
+	int width = wdFont * sxFont_;
+	int height = htFont * syFont_;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
-	const uint8_t* data = pFontCur_->GetPointer(ch);
+	const uint8_t* pData = pFontCur_->GetPointer(ch);
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
-	for (int i = 0; i < width; i++, pTop++) {
-		uint32_t bits = 0;
-		for (int j = 0; j < bytesPerLine; j++, data++) bits = (bits << 8) + *data;
+	int xCur = x;
+	for (int i = 0; i < wdFont; i++, pTop += sxFont_, xCur += sxFont_) {
+		uint64_t bits = 0;
+		if (syFont_ == 1) {
+			for (int j = 0; j < bytesPerLine; j++, pData++) {
+				bits = (bits << 8) + *pData;
+			}
+		}
+		for (int j = 0; j < bytesPerLine; j++, pData++) {
+			uint8_t data = *pData;
+			for (int k = 0; k < 8; k++, data <<= 1) {
+				for (int s = 0; s < syFont_; s++) {
+					bits = (bits << 1) + ((data & 0x80)? 1 : 0);
+				}
+			}
+		}
 		bits <<= bitOffset;
-		uint8_t* p = pTop;
-		for (int page = pageTop; page < GetNumPages() && bits; page++, p += GetWidth(), bits >>= 8) {
-			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
+		uint8_t* pLeft = pTop;
+		for (int page = pageTop; page < GetNumPages() && bits; page++, pLeft += GetWidth(), bits >>= 8) {
+			uint8_t* p = pLeft;
+			uint8_t data = static_cast<uint8_t>(bits & 0b11111111);
+			for (int j = 0; j < sxFont_ && xCur + j < GetWidth(); j++, p++) *p = Logic()(*p, data);
 		}
 	}
 }
 
 template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 {
+	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * sxFont_;
 	for (const char* p = str; *p; p++) {
 		DrawCharT<Logic>(x, y, *p);
-		x += pFontCur_->info.width + pFontCur_->info.wdSpacing;
+		x += xStep;
 	}
 }
 
