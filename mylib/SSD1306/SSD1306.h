@@ -1,5 +1,6 @@
 //==============================================================================
-// OLED/PLED Segment/Common Driver with Controller
+// 128x64 Dot Matrix OLED/PLED Segment/Common Driver with Controller
+// Specification: https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
 //==============================================================================
 #ifndef SSD1306_H
 #define SSD1306_H
@@ -11,14 +12,6 @@
 #include <hardware/i2c.h>
 
 class SSD1306 {
-public:
-	static const int BufferWidth = 128;
-	static const int BufferHeight = 32;
-	static const int DisplayWidth = 128;
-	static const int DisplayHeight = 32;
-	static const int PageHeight = 8;
-	static const int NumPages = DisplayHeight / PageHeight;
-	static const int BufferLen = NumPages * BufferWidth;
 public:
 	class Logic_Draw {
 	public:
@@ -34,23 +27,34 @@ public:
 	};
 	class Raw {
 	private:
+		static const int displayWidth_ = 128;
+		int displayHeight_;
+		static const int pageHeight_ = 8;
+	private:
 		uint8_t addr_;
 		uint8_t* buffWhole_;
 		uint8_t* buff_;
 	public:
-		Raw(uint8_t addr) : addr_(addr), buffWhole_(nullptr), buff_(nullptr) {}
+		Raw(uint8_t addr) : addr_(addr), buffWhole_(nullptr), buff_(nullptr), displayHeight_(32) {}
 		~Raw() {
 			::free(buffWhole_);
 		}
+	public:
+		uint8_t GetAddr() const { return addr_; }
+		int GetDisplayWidth() const { return displayWidth_; }
+		int GetDisplayHeight() const { return displayHeight_; }
+		int GetPageHeight() const { return pageHeight_; }
+		int GetNumPages() const { return displayHeight_ / pageHeight_; }
+		int GetBufferLen() const { return GetNumPages() * displayWidth_; }
+	public:
 		void AllocBuff() {
-			buffWhole_ = reinterpret_cast<uint8_t*>(::malloc(BufferLen + 1));
+			buffWhole_ = reinterpret_cast<uint8_t*>(::malloc(GetBufferLen() + 1));
 			buffWhole_[0] = 
 				(0b0 << 7) |	// Co = 0
 				(0b1 << 6);		// D/C# = 1
 			buff_ = buffWhole_ + 1;
 			FillBuffer(0x00);
 		}
-		uint8_t GetAddr() const { return addr_; }
 		void WriteCtrl(uint8_t ctrl) const {
 			uint8_t buff[2];
 			buff[0] =
@@ -61,11 +65,11 @@ public:
 		}
 		uint8_t* GetPointer() { return buff_; }
 		uint8_t* GetPointer(int x) { return buff_ + x; }
-		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * BufferWidth + x; }
-		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * BufferWidth + x; }
-		void FillBuffer(uint8_t data) { ::memset(buff_, data, BufferLen); }
+		uint8_t* GetPointer(int x, int y) { return buff_ + (y / 8) * displayWidth_ + x; }
+		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * displayWidth_ + x; }
+		void FillBuffer(uint8_t data) { ::memset(buff_, data, GetBufferLen()); }
 		void WriteBuffer() const {
-			::i2c_write_blocking(i2c_default, addr_, buffWhole_, BufferLen + 1, false);
+			::i2c_write_blocking(i2c_default, addr_, buffWhole_, GetBufferLen() + 1, false);
 		}
 public:
 		// 10.1 Fundamental Command
@@ -203,6 +207,14 @@ public:
 	Raw raw;
 public:
 	SSD1306(uint8_t addr = 0x3c) : raw(addr) {}
+public:
+	uint8_t GetAddr() const { return raw.GetAddr(); }
+	int GetDisplayWidth() const { return raw.GetDisplayWidth(); }
+	int GetDisplayHeight() const { return raw.GetDisplayHeight(); }
+	int GetPageHeight() const { return raw.GetPageHeight(); }
+	int GetNumPages() const { return raw.GetNumPages(); }
+	int GetBufferLen() const { return raw.GetBufferLen(); }
+public:
 	void Initialize();
 	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }

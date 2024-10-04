@@ -1,35 +1,45 @@
+//==============================================================================
+// 128x64 Dot Matrix OLED/PLED Segment/Common Driver with Controller
+// Specification: https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+//==============================================================================
 #include <stdio.h>
 #include "SSD1306.h"
 
 void SSD1306::Initialize()
 {
 	raw.AllocBuff();
-	raw.SetDisplayOnOff(0);				// set display off
-	// memory mapping
-	raw.SetMemoryAddressingMode(0);		// set memory address mode: horizontal addressng mode
-	raw.SetDisplayStartLine(0);			// set display start line to 0
-	raw.SetSegmentRemap(1);				// set segment re-map, column address 127 is mapped to SEG0
-	raw.SetMultiplexRatio(DisplayHeight - 1);	// set multiplex ratio: Display height - 1
-	raw.SetCOMOutputScanDirection(1);	// set COM (common) output scan direction. Scan from bottom up, COM[N-1] to COM0
-	raw.SetDisplayOffset(0);			// set display offset: no offset
-	raw.SetCOMPinsHardwareConfiguration(0, 0);
-										// set COM (common) pins hardware configuration. Board specific magic number.
+	raw.SetDisplayOnOff(0);							// Set Display ON/OFF = 0: OFF
+	raw.SetMemoryAddressingMode(0);					// Set Memory Addressing Mode = 0: Horizontal Addressing Mode
+	raw.SetDisplayStartLine(0);						// Set Display Start Line = 0
+	raw.SetSegmentRemap(1);							// Set Segment Re-map = 1: column address 127 is mapped to SEG0
+	raw.SetMultiplexRatio(GetDisplayHeight() - 1);	// Set Multiplex Ratio = GetDisplayHeight() - 1
+	raw.SetCOMOutputScanDirection(1);				// Set COM Output Scan Direction = 1: remapped mode. Scan from COM[N-1] to COM0
+	raw.SetDisplayOffset(0);						// Set Display Offset = 0
+	raw.SetCOMPinsHardwareConfiguration((GetDisplayHeight() == 64)? 1 : 0, 0);
+													// Set COM Pins Hardware Configuration
+													//   A[4] = 0: Sequential COM pin configuration
+													//          1: Alternative COM pin configuration
+													//   A[5] = 0: Disable COM Left/Right remap
 	raw.SetDisplayClockDivideRatioOscillatorFrequency(0, 8);
-										// set display clock divide ratio: div ratio of 1, standard freq 
-	raw.SetPrechargePeriod(1, 15);		// set pre-charge period: Vcc internally generated on our board
-	raw.SetVcomhDeselectLevel(0x3);		// set VCOMH deselect level: 0.83 x Vcc
-	raw.SetContrastControl(255);		// set contrast conrol
-	raw.EntireDisplayOn(0);				// set entire display on to follow RAM content
-	raw.SetNormalInverseDisplay(0);		// set normal (not inverted) display
-	raw.ChargePumpSetting(1);			// set charge pump: Vcc internally generated on our board
-	raw.DeactivateScroll();				// deactivate horizontal scrolling if set. This is necessary as memory writes will corrupt if scrolling was enabled
-	raw.SetDisplayOnOff(1);				// turn display on
+													// Set Display Clock Divide Ratio/Oscillator Frequency
+													//   A[3:0] = 0: divide ratio is 1
+													//   A[7:4] = 8: oscilator frequency
+	raw.SetPrechargePeriod(1, 15);					// Set Pre-charge Period
+													//   A[3:0] = 1: Phase 1 period to 1
+													//   A[7:4] = 15: Phase 2 period to 15
+	raw.SetVcomhDeselectLevel(0x3);					// Set Vcomh Deselect Level = 3: up to 0.83 x Vcc
+	raw.SetContrastControl(255);					// Set Contrast Conrol = 255
+	raw.EntireDisplayOn(0);							// Entire Display ON = 0: Resume to RAM content display
+	raw.SetNormalInverseDisplay(0);					// Set Normal/Inverse Display = 0: Normal display
+	raw.ChargePumpSetting(1);						// Charge Pump Settig = 1: Enable charge pump during display on
+	raw.DeactivateScroll();							// Deactivate Scroll
+	raw.SetDisplayOnOff(1);							// Set Display ON/OFF = 1: ON
 }
 
 void SSD1306::Refresh()
 {
-	raw.SetColumnAddress(0, BufferWidth - 1);
-	raw.SetPageAddress(0, NumPages - 1);
+	raw.SetColumnAddress(0, GetDisplayWidth() - 1);
+	raw.SetPageAddress(0, GetNumPages() - 1);
 	raw.WriteBuffer();
 }
 
@@ -46,20 +56,20 @@ template<class Logic> void SSD1306::DrawVLineT_NoAdjust(int x, int y, int height
 	int page;
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
-	for (uint8_t* p = pTop; page < NumPages && bits; page++, p += BufferWidth, bits >>= 8) {
+	for (uint8_t* p = pTop; page < GetNumPages() && bits; page++, p += GetDisplayWidth(), bits >>= 8) {
 		*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 	}
 }
 
 template<class Logic> void SSD1306::DrawHLineT(int x, int y, int width)
 {
-	if (!CheckCoord(y, DisplayHeight) || !AdjustCoord(&x, &width, DisplayWidth)) return;
+	if (!CheckCoord(y, GetDisplayHeight()) || !AdjustCoord(&x, &width, GetDisplayWidth())) return;
 	DrawHLineT_NoAdjust<Logic>(x, y, width);
 }
 
 template<class Logic> void SSD1306::DrawVLineT(int x, int y, int height)
 {
-	if (!CheckCoord(x, DisplayWidth) || !AdjustCoord(&y, &height, DisplayHeight)) return;
+	if (!CheckCoord(x, GetDisplayWidth()) || !AdjustCoord(&y, &height, GetDisplayHeight())) return;
 	DrawVLineT_NoAdjust<Logic>(x, y, height);
 }
 
@@ -113,19 +123,19 @@ template<class Logic> void SSD1306::DrawRectT(int x, int y, int width, int heigh
 	int yTop = y, yBottom = y + height - 1;
 	int xLeftAdjust = xLeft, widthAdjust = width;
 	int yTopAdjust = yTop, heightAdjust = height;
-	if (AdjustCoord(&xLeftAdjust, &widthAdjust, DisplayWidth)) {
-		if (CheckCoord(yTop, DisplayHeight)) {
+	if (AdjustCoord(&xLeftAdjust, &widthAdjust, GetDisplayWidth())) {
+		if (CheckCoord(yTop, GetDisplayHeight())) {
 			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yTop, widthAdjust);
 		}
-		if (CheckCoord(yBottom, DisplayHeight)) {
+		if (CheckCoord(yBottom, GetDisplayHeight())) {
 			DrawHLineT_NoAdjust<Logic>(xLeftAdjust, yBottom, widthAdjust);
 		}
 	}
-	if (AdjustCoord(&yTopAdjust, &heightAdjust, DisplayHeight)) {
-		if (CheckCoord(xLeft, DisplayWidth)) {
+	if (AdjustCoord(&yTopAdjust, &heightAdjust, GetDisplayHeight())) {
+		if (CheckCoord(xLeft, GetDisplayWidth())) {
 			DrawVLineT_NoAdjust<Logic>(xLeft, yTopAdjust, heightAdjust);
 		}
-		if (CheckCoord(xRight, DisplayWidth)) {
+		if (CheckCoord(xRight, GetDisplayWidth())) {
 			DrawVLineT_NoAdjust<Logic>(xRight, yTopAdjust, heightAdjust);
 		}
 	}
@@ -133,12 +143,12 @@ template<class Logic> void SSD1306::DrawRectT(int x, int y, int width, int heigh
 
 template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int height)
 {
-	if (!AdjustCoord(&x, &width, DisplayWidth) || !AdjustCoord(&y, &height, DisplayHeight)) return;
+	if (!AdjustCoord(&x, &width, GetDisplayWidth()) || !AdjustCoord(&y, &height, GetDisplayHeight())) return;
 	uint32_t bits = (0xffffffff << y) & ~(0xffffffff << (y + height));
 	int page;
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
-	for ( ; page < NumPages && bits; page++, pTop += BufferWidth, bits >>= 8) {
+	for ( ; page < GetNumPages() && bits; page++, pTop += GetDisplayWidth(), bits >>= 8) {
 		uint8_t* p = pTop;
 		for (int i = 0; i < width; i++, p++) {
 			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
