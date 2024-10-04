@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "SSD1306.h"
 
-const SSD1306::Font font = { { 8, 5, 1, 1, 32, 126 }, {
+const SSD1306::Font font5x8 = { { 8, 5, 1, 1, 32, 126 }, {
 	// ' '
 	0b00000000,
 	0b00000000,
@@ -574,7 +574,7 @@ const SSD1306::Font font = { { 8, 5, 1, 1, 32, 126 }, {
 	0b00000010,
 } };
 
-const SSD1306::Font font_BMSPA = { { 8, 8, 1, 0, 32, 126 }, {
+const SSD1306::Font fontBMSPA = { { 8, 8, 1, 0, 32, 126 }, {
 	// ' '
 	0b00000000,
 	0b00000000,
@@ -1460,7 +1460,8 @@ int main()
 	oled.Clear();
 	oled.Refresh();
 	::sleep_ms(1000);
-	oled.SetFont(font_BMSPA, 2, 3);
+	oled.SetFont(font5x8, 2, 4);
+	//oled.SetFont(fontBMSPA, 2, 3);
 	for (int x = 0; x < 32; x++) {
 		oled.Clear();
 		oled.DrawString(x, 0, "ABCDEFGHIJKLMNOPQRSTU");

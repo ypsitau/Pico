@@ -220,12 +220,13 @@ public:
 		}
 	};
 public:
+	static const uint8_t DefaultAddr = 0x3c;
 	Raw raw;
 public:
 	const Font* pFontCur_;
 	int sxFont_, syFont_;
 public:
-	SSD1306(i2c_inst_t* i2c, uint8_t addr = 0x3c, bool highResoFlag = true) :
+	SSD1306(i2c_inst_t* i2c, uint8_t addr = DefaultAddr, bool highResoFlag = true) :
 			raw(i2c, addr, highResoFlag? 64 : 32), pFontCur_(nullptr), sxFont_(1), syFont_(1) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
