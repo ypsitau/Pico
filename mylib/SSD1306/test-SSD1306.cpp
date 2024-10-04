@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "SSD1306.h"
 
-const SSD1306::Font font = { { 8, 5, 1, 32, 126 }, {
+const SSD1306::Font font = { { 8, 5, 1, 1, 32, 126 }, {
 	// ' '
 	0b00000000,
 	0b00000000,
@@ -574,7 +574,7 @@ const SSD1306::Font font = { { 8, 5, 1, 32, 126 }, {
 	0b00000010,
 } };
 
-const SSD1306::Font font_BMSPA = { { 8, 8, 0, 32, 126 }, {
+const SSD1306::Font font_BMSPA = { { 8, 8, 1, 0, 32, 126 }, {
 	// ' '
 	0b00000000,
 	0b00000000,
@@ -1455,11 +1455,12 @@ int main()
 	::gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
 	::gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
 	::gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
-	SSD1306 oled;
+	SSD1306 oled(i2c_default);
 	oled.Initialize();
 	oled.Clear();
 	oled.SetFont(font_BMSPA);
 	oled.DrawString(0, 0, "ABCDEFGHIJKLMNOPQRSTU");
+	oled.DrawString(0, 8, "ABCDEFGHIJKLMNOPQRSTU");
 	oled.Refresh();
 	for (;;) ;
 #if 0

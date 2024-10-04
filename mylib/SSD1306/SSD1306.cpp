@@ -159,16 +159,15 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 {
 	if (!pFontCur_) return;
-	int width = pFontCur_->info.width, height = pFontCur_->info.height;
+	int width = pFontCur_->info.width, height = pFontCur_->info.height, bytesPerLine = pFontCur_->info.bytesPerLine;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
-	int pageFont = (height + 7) / 8;
-	const uint8_t* data = pFontCur_->data + static_cast<int>(ch - pFontCur_->info.codeFirst) * width * pageFont;
+	const uint8_t* data = pFontCur_->GetPointer(ch);
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
 	for (int i = 0; i < width; i++, pTop++) {
 		uint32_t bits = 0;
-		for (int j = 0; j < pageFont; j++, data++) bits = (bits << 8) + *data;
+		for (int j = 0; j < bytesPerLine; j++, data++) bits = (bits << 8) + *data;
 		bits <<= bitOffset;
 		uint8_t* p = pTop;
 		for (int page = pageTop; page < GetNumPages() && bits; page++, p += GetWidth(), bits >>= 8) {

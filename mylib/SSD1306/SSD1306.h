@@ -14,9 +14,13 @@
 class SSD1306 {
 public:
 	struct Font {
+		const uint8_t* GetPointer(int code) const {
+			return data + static_cast<int>(code - info.codeFirst) * info.width * info.bytesPerLine;
+		}
 		struct {
 			int height;
 			int width;
+			int bytesPerLine;
 			int wdSpacing;
 			int codeFirst;
 			int codeLast;
@@ -41,12 +45,13 @@ public:
 		int height_;
 		static const int heightPerPage_ = 8;
 	private:
+	i2c_inst_t* i2c_;
 		uint8_t addr_;
 		uint8_t* buffWhole_;
 		uint8_t* buff_;
 	public:
-		Raw(uint8_t addr, int height) :
-				addr_(addr), buffWhole_(nullptr), buff_(nullptr), height_(height) {}
+		Raw(i2c_inst_t* i2c, uint8_t addr, int height) :
+				i2c_(i2c), addr_(addr), buffWhole_(nullptr), buff_(nullptr), height_(height) {}
 		~Raw() {
 			::free(buffWhole_);
 		}
@@ -72,7 +77,7 @@ public:
 				(0b1 << 7) |	// Co = 1
 				(0b0 << 6);		// D/C# = 0
 			buff[1] = ctrl;
-			::i2c_write_blocking(i2c_default, addr_, buff, sizeof(buff), false);
+			::i2c_write_blocking(i2c_, addr_, buff, sizeof(buff), false);
 		}
 		uint8_t* GetPointer() { return buff_; }
 		uint8_t* GetPointer(int x) { return buff_ + x; }
@@ -80,7 +85,7 @@ public:
 		uint8_t* GetPointer(int x, int y, int* pPage) { *pPage = y / 8; return buff_ + *pPage * width_ + x; }
 		void FillBuffer(uint8_t data) { ::memset(buff_, data, GetBufferLen()); }
 		void WriteBuffer() const {
-			::i2c_write_blocking(i2c_default, addr_, buffWhole_, GetBufferLen() + 1, false);
+			::i2c_write_blocking(i2c_, addr_, buffWhole_, GetBufferLen() + 1, false);
 		}
 public:
 		// 10.1 Fundamental Command
@@ -219,7 +224,8 @@ public:
 public:
 	const Font* pFontCur_;
 public:
-	SSD1306(uint8_t addr = 0x3c, bool highResoFlag = true) : raw(addr, highResoFlag? 64 : 32), pFontCur_(nullptr) {}
+	SSD1306(i2c_inst_t* i2c, uint8_t addr = 0x3c, bool highResoFlag = true) :
+						raw(i2c, addr, highResoFlag? 64 : 32), pFontCur_(nullptr) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
 	int GetWidth() const { return raw.GetWidth(); }
