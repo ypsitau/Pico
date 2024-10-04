@@ -35,7 +35,8 @@ public:
 		uint8_t* buffWhole_;
 		uint8_t* buff_;
 	public:
-		Raw(uint8_t addr) : addr_(addr), buffWhole_(nullptr), buff_(nullptr), displayHeight_(32) {}
+		Raw(uint8_t addr, int displayHeight) :
+				addr_(addr), buffWhole_(nullptr), buff_(nullptr), displayHeight_(displayHeight) {}
 		~Raw() {
 			::free(buffWhole_);
 		}
@@ -206,7 +207,7 @@ public:
 public:
 	Raw raw;
 public:
-	SSD1306(uint8_t addr = 0x3c) : raw(addr) {}
+	SSD1306(uint8_t addr = 0x3c, bool highResoFlag = true) : raw(addr, highResoFlag? 64 : 32) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
 	int GetDisplayWidth() const { return raw.GetDisplayWidth(); }
