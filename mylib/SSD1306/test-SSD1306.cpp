@@ -1458,6 +1458,8 @@ int main()
 	SSD1306 oled(i2c_default);
 	oled.Initialize();
 	oled.Clear();
+	oled.Refresh();
+	::sleep_ms(1000);
 	oled.SetFont(font_BMSPA);
 	oled.DrawString(0, 0, "ABCDEFGHIJKLMNOPQRSTU");
 	oled.DrawString(0, 8, "ABCDEFGHIJKLMNOPQRSTU");
