@@ -156,6 +156,35 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 	}
 }
 
+template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
+{
+	if (!pFontCur_) return;
+	int width = pFontCur_->info.width, height = pFontCur_->info.height;
+	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
+	int pageFont = (height + 7) / 8;
+	const uint8_t* data = pFontCur_->data + static_cast<int>(ch - pFontCur_->info.codeFirst) * width * pageFont;
+	int pageTop;
+	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
+	int bitOffset = y - pageTop * 8;
+	for (int i = 0; i < width; i++, pTop++) {
+		uint32_t bits = 0;
+		for (int j = 0; j < pageFont; j++, data++) bits = (bits << 8) + *data;
+		bits <<= bitOffset;
+		uint8_t* p = pTop;
+		for (int page = pageTop; page < GetNumPages() && bits; page++, p += GetWidth(), bits >>= 8) {
+			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
+		}
+	}
+}
+
+template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
+{
+	for (const char* p = str; *p; p++) {
+		DrawCharT<Logic>(x, y, *p);
+		x += pFontCur_->info.width + pFontCur_->info.wdSpacing;
+	}
+}
+
 void SSD1306::DrawHLine(int x, int y, int width)
 {
 	DrawHLineT<Logic_Draw>(x, y, width);
@@ -179,6 +208,16 @@ void SSD1306::DrawRect(int x, int y, int width, int height)
 void SSD1306::DrawRectFill(int x, int y, int width, int height)
 {
 	DrawRectFillT<Logic_Draw>(x, y, width, height);
+}
+
+void SSD1306::DrawChar(int x, int y, char ch)
+{
+	DrawCharT<Logic_Draw>(x, y, ch);
+}
+
+void SSD1306::DrawString(int x, int y, const char* str)
+{
+	DrawStringT<Logic_Draw>(x, y, str);
 }
 
 void SSD1306::EraseHLine(int x, int y, int width)
@@ -206,6 +245,16 @@ void SSD1306::EraseRectFill(int x, int y, int width, int height)
 	DrawRectFillT<Logic_Erase>(x, y, width, height);
 }
 
+void SSD1306::EraseChar(int x, int y, char ch)
+{
+	DrawCharT<Logic_Erase>(x, y, ch);
+}
+
+void SSD1306::EraseString(int x, int y, const char* str)
+{
+	DrawStringT<Logic_Erase>(x, y, str);
+}
+
 void SSD1306::InvertHLine(int x, int y, int width)
 {
 	DrawHLineT<Logic_Invert>(x, y, width);
@@ -229,6 +278,16 @@ void SSD1306::InvertRect(int x, int y, int width, int height)
 void SSD1306::InvertRectFill(int x, int y, int width, int height)
 {
 	DrawRectFillT<Logic_Invert>(x, y, width, height);
+}
+
+void SSD1306::InvertChar(int x, int y, char ch)
+{
+	DrawCharT<Logic_Invert>(x, y, ch);
+}
+
+void SSD1306::InvertString(int x, int y, const char* str)
+{
+	DrawStringT<Logic_Invert>(x, y, str);
 }
 
 void SSD1306::SortPair(int v1, int v2, int* pMin, int* pMax)

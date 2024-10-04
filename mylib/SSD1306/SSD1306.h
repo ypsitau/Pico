@@ -13,6 +13,16 @@
 
 class SSD1306 {
 public:
+	struct Font {
+		struct {
+			int height;
+			int width;
+			int wdSpacing;
+			int codeFirst;
+			int codeLast;
+		} info;
+		uint8_t data[];
+	};
 	class Logic_Draw {
 	public:
 		uint8_t operator()(uint8_t v1, uint8_t v2) { return v1 | v2; }
@@ -207,7 +217,9 @@ public:
 public:
 	Raw raw;
 public:
-	SSD1306(uint8_t addr = 0x3c, bool highResoFlag = true) : raw(addr, highResoFlag? 64 : 32) {}
+	const Font* pFontCur_;
+public:
+	SSD1306(uint8_t addr = 0x3c, bool highResoFlag = true) : raw(addr, highResoFlag? 64 : 32), pFontCur_(nullptr) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
 	int GetWidth() const { return raw.GetWidth(); }
@@ -220,6 +232,7 @@ public:
 	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
 	void Clear(uint8_t data = 0x00) { raw.FillBuffer(data); }
+	void SetFont(const Font& font) { pFontCur_ = &font; }
 private:
 	template<class Logic> void DrawPixelT(int x, int y) {
 		uint8_t* p = raw.GetPointer(x, y);
@@ -232,6 +245,8 @@ private:
 	template<class Logic> void DrawLineT(int x0, int y0, int x1, int y1);
 	template<class Logic> void DrawRectT(int x, int y, int width, int height);
 	template<class Logic> void DrawRectFillT(int x, int y, int width, int height);
+	template<class Logic> void DrawCharT(int x, int y, char ch);
+	template<class Logic> void DrawStringT(int x, int y, const char* str);
 public:
 	void DrawPixel(int x, int y) { DrawPixelT<Logic_Draw>(x, y); }
 	void DrawHLine(int x, int y, int width);
@@ -239,18 +254,25 @@ public:
 	void DrawLine(int x0, int y0, int x1, int y1);
 	void DrawRect(int x, int y, int width, int height);
 	void DrawRectFill(int x, int y, int width, int height);
+	void DrawChar(int x, int y, char ch);
+	void DrawString(int x, int y, const char* str);
 	void ErasePixel(int x, int y) { DrawPixelT<Logic_Erase>(x, y); }
 	void EraseHLine(int x, int y, int width);
 	void EraseVLine(int x, int y, int height);
 	void EraseLine(int x0, int y0, int x1, int y1);
 	void EraseRect(int x, int y, int width, int height);
 	void EraseRectFill(int x, int y, int width, int height);
+	void EraseChar(int x, int y, char ch);
+	void EraseString(int x, int y, const char* str);
 	void InvertPixel(int x, int y) { DrawPixelT<Logic_Invert>(x, y); }
 	void InvertHLine(int x, int y, int width);
 	void InvertVLine(int x, int y, int height);
 	void InvertLine(int x0, int y0, int x1, int y1);
 	void InvertRect(int x, int y, int width, int height);
 	void InvertRectFill(int x, int y, int width, int height);
+	void InvertChar(int x, int y, char ch);
+	void InvertString(int x, int y, const char* str);
+public:
 private:
 	static void SortPair(int v1, int v2, int* pMin, int* pMax);
 	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
