@@ -1,0 +1,105 @@
+#!/usr/bin/env gurax
+import(re)
+
+CharStruct = class {
+	name as String
+	ENCODING as Number
+	SWIDTH as Tuple
+	DWIDTH as Tuple
+	BBX as Tuple
+	BITMAP[] as Number
+}
+
+Context = class {
+	STARTFONT as String
+	FONT as String
+	SIZE as Tuple
+	FONTBOUNDINGBOX as Tuple
+	FONTNAME_REGISTRY as String
+	FOUNDRY as String
+	FAMILY_NAME as String
+	WEIGHT_NAME as String
+	SLANT as String
+	SETWIDTH_NAME as String
+	ADD_STYLE_NAME as String
+	PIXEL_SIZE as Number
+	POINT_SIZE as Number
+	RESOLUTION_X as Number
+	RESOLUTION_Y as Number
+	SPACING as String
+	AVERAGE_WIDTH as Number
+	CHARSET_REGISTRY as String
+	CHARSET_ENCODING as String
+	DEFAULT_CHAR as Number
+	FONT_DESCENT as Number
+	FONT_ASCENT as Number
+	COPYRIGHT as String
+	CHARS as Number
+	__init__(stream as Stream) = {
+		stat = `init
+		stream.ReadLines {|line|
+			if (stat == `init) {
+				if (m = line.Match(r'^STARTFONT\s+(.*)')) {
+					this.STARTFONT = m[1]
+				} elsif (m = line.Match(r'^FONT\s+(.*)')) {
+					this.FONT = m[1]
+				} elsif (m = line.Match(r'^SIZE\s+(.*)')) {
+					this.SIZE = m[1].SplitReg(r'\s+'):*ToNumber().tuple
+				} elsif (m = line.Match(r'^FONTBOUNDINGBOX\s+(.*)')) {
+					this.FONTBOUNDINGBOX = m[1].SplitReg(r'\s+'):*ToNumber().tuple
+				} elsif (m = line.Match(r'^FONTNAME_REGISTRY\s+"(.*)"')) {
+					this.FONTNAME_REGISTRY = m[1]
+				} elsif (m = line.Match(r'^FOUNDRY\s+"(.*)"')) {
+					this.FOUNDRY = m[1]
+				} elsif (m = line.Match(r'^FAMILY_NAME\s+"(.*)"')) {
+					this.FAMILY_NAME = m[1]
+				} elsif (m = line.Match(r'^WEIGHT_NAME\s+"(.*)"')) {
+					this.WEIGHT_NAME = m[1]
+				} elsif (m = line.Match(r'^SLANT\s+"(.*)"')) {
+					this.SLANT = m[1]
+				} elsif (m = line.Match(r'^SETWIDTH_NAME\s+"(.*)"')) {
+					this.SETWIDTH_NAME = m[1]
+				} elsif (m = line.Match(r'^ADD_STYLE_NAME\s+"(.*)"')) {
+					this.ADD_STYLE_NAME = m[1]
+				} elsif (m = line.Match(r'^PIXEL_SIZE\s+(.*)')) {
+					this.PIXEL_SIZE = m[1].ToNumber()
+				} elsif (m = line.Match(r'^POINT_SIZE\s+(.*)')) {
+					this.POINT_SIZE = m[1].ToNumber()
+				} elsif (m = line.Match(r'^RESOLUTION_X\s+(.*)')) {
+					this.RESOLUTION_X = m[1].ToNumber()
+				} elsif (m = line.Match(r'^RESOLUTION_Y\s+(.*)')) {
+					this.RESOLUTION_Y = m[1].ToNumber()
+				} elsif (m = line.Match(r'^SPACING\s+"(.*)"')) {
+					this.SPACING = m[1]
+				} elsif (m = line.Match(r'^AVERAGE_WIDTH\s+(.*)')) {
+					this.AVERAGE_WIDTH = m[1].ToNumber()
+				} elsif (m = line.Match(r'^CHARSET_REGISTRY\s+"(.*)"')) {
+					this.CHARSET_REGISTRY = m[1]
+				} elsif (m = line.Match(r'^CHARSET_ENCODING\s+"(.*)"')) {
+					this.CHARSET_ENCODING = m[1]
+				} elsif (m = line.Match(r'^DEFAULT_CHAR\s+(.*)')) {
+					this.DEFAULT_CHAR = m[1].ToNumber()
+				} elsif (m = line.Match(r'^FONT_DESCENT\s+(.*)')) {
+					this.FONT_DESCENT = m[1].ToNumber()
+				} elsif (m = line.Match(r'^FONT_ASCENT\s+(.*)')) {
+					this.FONT_ASCENT = m[1].ToNumber()
+				} elsif (m = line.Match(r'^COPYRIGHT\s+"(.*)"')) {
+					this.COPYRIGHT = m[1]
+				} elsif (m = line.Match(r'^CHARS\s+(.*)')) {
+					stat = `chars
+				}
+			} elsif (stat == `chars) {
+			}
+		}
+	}
+}
+
+ctx = Context('k8x12.bdf')
+
+[`STARTFONT, `FONT, `SIZE, `FONTBOUNDINGBOX, `FONTNAME_REGISTRY, `FOUNDRY,
+ `FAMILY_NAME, `WEIGHT_NAME, `SLANT, `SETWIDTH_NAME, `ADD_STYLE_NAME,
+ `PIXEL_SIZE, `POINT_SIZE, `RESOLUTION_X, `RESOLUTION_Y, `SPACING,
+ `AVERAGE_WIDTH, `CHARSET_REGISTRY, `CHARSET_ENCODING, `DEFAULT_CHAR,
+ `FONT_DESCENT, `FONT_ASCENT, `COPYRIGHT].Each {|symbol|
+	Printf('%-20s %s\n', symbol, ctx.__prop__(symbol))
+}
