@@ -1460,8 +1460,9 @@ int main()
 	oled.Clear();
 	oled.Refresh();
 	::sleep_ms(1000);
-	//oled.SetFont(font5x8, 2, 4);
-	oled.SetFont(fontBMSPA, 2, 2);
+	//oled.SetFont(font5x8);
+	oled.SetFont(fontBMSPA);
+	oled.SetFontScale(4, 8);
 	for (int x = 0; x < 32; x++) {
 		oled.Clear();
 		oled.DrawString(x, 0, "ABCDEFGHIJKLMNOPQRSTU");

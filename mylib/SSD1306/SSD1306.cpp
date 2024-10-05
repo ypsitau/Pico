@@ -47,7 +47,10 @@ template<class Logic> void SSD1306::DrawHLineT_NoAdjust(int x, int y, int width)
 {
 	uint8_t data = 0b00000001 << (y & 0b111);
 	uint8_t* p = raw.GetPointer(x, y);
-	for (int i = 0; i < width; i++, p++) *p = Logic()(*p, data);
+	for (int i = 0; i < width; i++, p++) {
+		assert(raw.EnsureSafePointer(p));
+		*p = Logic()(*p, data);
+	}
 }
 
 template<class Logic> void SSD1306::DrawVLineT_NoAdjust(int x, int y, int height)
@@ -57,6 +60,7 @@ template<class Logic> void SSD1306::DrawVLineT_NoAdjust(int x, int y, int height
 	uint8_t* pTop = raw.GetPointer(x, y, &page);
 	bits >>= page * 8;
 	for (uint8_t* p = pTop; page < GetNumPages() && bits; page++, p += GetWidth(), bits >>= 8) {
+		assert(raw.EnsureSafePointer(p));
 		*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 	}
 }
@@ -151,6 +155,7 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 	for ( ; page < GetNumPages() && bits; page++, pTop += GetWidth(), bits >>= 8) {
 		uint8_t* p = pTop;
 		for (int i = 0; i < width; i++, p++) {
+			assert(raw.EnsureSafePointer(p));
 			*p = Logic()(*p, static_cast<uint8_t>(bits & 0b11111111));
 		}
 	}
@@ -162,17 +167,17 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 	int wdFont = pFontCur_->info.width;
 	int htFont = pFontCur_->info.height;
 	int bytesPerLine = pFontCur_->info.bytesPerLine;
-	int width = wdFont * sxFont_;
-	int height = htFont * syFont_;
+	int width = wdFont * fontScaleX_;
+	int height = htFont * fontScaleY_;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
 	const uint8_t* pData = pFontCur_->GetPointer(ch);
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
 	int xCur = x;
-	for (int i = 0; i < wdFont; i++, pTop += sxFont_, xCur += sxFont_) {
+	for (int i = 0; i < wdFont; i++, pTop += fontScaleX_, xCur += fontScaleX_) {
 		uint64_t bits = 0;
-		if (syFont_ == 1) {
+		if (fontScaleY_ == 1) {
 			for (int j = 0; j < bytesPerLine; j++, pData++) {
 				bits = (bits << 8) + *pData;
 			}
@@ -180,7 +185,7 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 		for (int j = 0; j < bytesPerLine; j++, pData++) {
 			uint8_t data = *pData;
 			for (int k = 0; k < 8; k++, data <<= 1) {
-				for (int s = 0; s < syFont_; s++) {
+				for (int s = 0; s < fontScaleY_; s++) {
 					bits = (bits << 1) + ((data & 0x80)? 1 : 0);
 				}
 			}
@@ -190,14 +195,17 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 		for (int page = pageTop; page < GetNumPages() && bits; page++, pLeft += GetWidth(), bits >>= 8) {
 			uint8_t* p = pLeft;
 			uint8_t data = static_cast<uint8_t>(bits & 0b11111111);
-			for (int j = 0; j < sxFont_ && xCur + j < GetWidth(); j++, p++) *p = Logic()(*p, data);
+			for (int j = 0; j < fontScaleX_ && xCur + j < GetWidth(); j++, p++) {
+				assert(raw.EnsureSafePointer(p));
+				*p = Logic()(*p, data);
+			}
 		}
 	}
 }
 
 template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 {
-	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * sxFont_;
+	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * fontScaleX_;
 	for (const char* p = str; *p; p++) {
 		DrawCharT<Logic>(x, y, *p);
 		x += xStep;
