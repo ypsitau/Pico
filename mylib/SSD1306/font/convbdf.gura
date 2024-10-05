@@ -1,0 +1,15 @@
+#!/usr/bin/env gurax
+import(font.bdf)
+import(tar)
+
+ctx = font.bdf.Context('shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')
+Printf('// %s\n', ctx.FONT)
+Printf('const SSD1306::Font font = { { 16, 8, 2, 0, 32, 126 }, {\n')
+Range(32, 127) {|code|
+	charEntry = ctx.charEntryDict[code]
+	Printf('// %s\n', charEntry.name)
+	charEntry.ScanBitmapVert().Each {|data|
+		Printf('0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+	}
+}
+Printf('} };\n')
