@@ -5,9 +5,12 @@
 #include <stdio.h>
 #include "SSD1306.h"
 
+//------------------------------------------------------------------------------
+// SSD1306
+//------------------------------------------------------------------------------
 void SSD1306::Initialize()
 {
-	raw.AllocBuff();
+	raw.AllocBuffer();
 	raw.SetDisplayOnOff(0);							// Set Display ON/OFF = 0: OFF
 	raw.SetMemoryAddressingMode(0);					// Set Memory Addressing Mode = 0: Horizontal Addressing Mode
 	raw.SetDisplayStartLine(0);						// Set Display Start Line = 0
@@ -341,4 +344,12 @@ bool SSD1306::AdjustCoord(int* pV, int* pDist, int vLimit)
 		dist = vLimit - v;
 	}
 	return true;
+}
+
+//------------------------------------------------------------------------------
+// SSD1306::Font
+//------------------------------------------------------------------------------
+const uint8_t* SSD1306::Font::GetPointer(int code) const
+{
+	return pFontEntryTbl[code - info.codeFirst]->data;
 }

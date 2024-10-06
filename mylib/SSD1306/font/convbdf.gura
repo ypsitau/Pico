@@ -9,24 +9,38 @@ if (sys.argv.len < 2) {
 }
 fileName = sys.argv[1]
 ctx = font.bdf.Context(fileName)
-Printf('// %s\n', ctx.XLogicalFontDescription)
 bytesPerLine = Int(ctx.FONTBOUNDINGBOX.h + 7) / 8
 codeFirst = 32, codeLast = 126
-Printf('const SSD1306::Font font = { { %d, %d, %d, 0, %d, %d }, {\n',
-	ctx.FONTBOUNDINGBOX.w, ctx.FONTBOUNDINGBOX.h, bytesPerLine, codeFirst, codeLast)
-Range(codeFirst, codeLast + 1) {|code|
-	charEntry = ctx.charEntryDict.Get(code)
-	if (!charEntry) {
-		sys.cerr.Printf('error: code#%02x doesn\'t exist', code)
-		sys.Exit(1)
-	}
-	Printf("\t// '%c'\n", code)
-	charEntry.ScanBitmapVert().Each {|data|
-		if (bytesPerLine == 1) {
-			Printf('\t0b%08b,\n', data)
-		} else {
-			Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+fontEntryNames = []
+Stream('../Font_Shinonome.cpp', 'w') {|fout|
+	fout.Print(R'''
+	#include "SSD1306.h"
+
+	''')
+	fout.Printf('// %s\n', ctx.XLogicalFontDescription)
+	Range(codeFirst, codeLast + 1) {|code, idx|
+		charEntry = ctx.charEntryDict.Get(code)
+		if (!charEntry) {
+			sys.cerr.Printf('error: code#%02x doesn\'t exist', code)
+			sys.Exit(1)
 		}
+		(idx > 0) && fout.Println()
+		fout.Printf("// '%c'\n", code)
+		fontEntryName = Format('fontEntry_%08x', code)
+		fontEntryNames.Add(fontEntryName)
+		fout.Printf('const SSD1306::FontEntry %s = { 0x%08x, {\n', fontEntryName, code)
+		charEntry.ScanBitmapVert().Each {|data|
+			if (bytesPerLine == 1) {
+				fout.Printf('\t0b%08b,\n', data)
+			} else {
+				fout.Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+			}
+		}
+		fout.Printf('} };\n')
 	}
+	fout.Println()
+	fout.Printf('const SSD1306::Font font = { { %d, %d, %d, 0, %d, %d }, {\n',
+		ctx.FONTBOUNDINGBOX.w, ctx.FONTBOUNDINGBOX.h, bytesPerLine, codeFirst, codeLast)
+	fout.Printf('\t&%s,\n', fontEntryNames)
+	fout.Printf('} };\n')
 }
-Printf('} };\n')

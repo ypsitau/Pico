@@ -154,7 +154,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(SSD1306 SSD1306.cpp test-SSD1306.cpp)
+add_executable(SSD1306 SSD1306.cpp Font_Shinonome.cpp test-SSD1306.cpp )
 
 pico_set_program_name(SSD1306 "SSD1306")
 pico_set_program_version(SSD1306 "0.1")

@@ -13,10 +13,12 @@
 
 class SSD1306 {
 public:
+	struct FontEntry {
+		uint32_t code;
+		uint8_t data[];
+	};
 	struct Font {
-		const uint8_t* GetPointer(int code) const {
-			return data + static_cast<int>(code - info.codeFirst) * info.width * info.bytesPerLine;
-		}
+		const uint8_t* GetPointer(int code) const;
 		struct {
 			int width;
 			int height;
@@ -25,7 +27,7 @@ public:
 			int codeFirst;
 			int codeLast;
 		} info;
-		uint8_t data[];
+		const FontEntry* pFontEntryTbl[];
 	};
 	class Logic_Draw {
 	public:
@@ -68,7 +70,7 @@ public:
 		int GetNumPages() const { return numPages_; }
 		int GetBufferLen() const { return bufferLen_; }
 	public:
-		void AllocBuff() {
+		void AllocBuffer() {
 			buffWhole_ = reinterpret_cast<uint8_t*>(::malloc(bufferLen_ + 1));
 			buffWhole_[0] = 
 				(0b0 << 7) |	// Co = 0
