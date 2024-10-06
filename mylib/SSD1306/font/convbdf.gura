@@ -2,17 +2,26 @@
 import(font.bdf)
 import(tar)
 
-ctx = font.bdf.Context('shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')
-ctx.PrintHeader()
-ctx.PrintEntries()
-sys.Exit()
-Printf('// %s\n', ctx.FONT)
-Printf('const SSD1306::Font font = { { 16, 8, 2, 0, 32, 126 }, {\n')
+if (sys.argv.len < 2) {
+	sys.cerr.Println('usage: convbdf bdffile')
+	sys.Exit(1)
+}
+fileName = sys.argv[1]
+//ctx = font.bdf.Context('shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')
+ctx = font.bdf.Context(fileName)
+Printf('// %s\n', ctx.XLogicalFontDescription)
+bytesPerLine = Int(ctx.FONTBOUNDINGBOX.h + 7) / 8
+Printf('const SSD1306::Font font = { { %d, %d, %d, 0, 32, 126 }, {\n',
+	ctx.FONTBOUNDINGBOX.h, ctx.FONTBOUNDINGBOX.w, bytesPerLine)
 Range(32, 127) {|code|
 	charEntry = ctx.charEntryDict[code]
-	Printf('// %s\n', charEntry.name)
+	Printf("\t// '%c'\n", code)
 	charEntry.ScanBitmapVert().Each {|data|
-		Printf('0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+		if (bytesPerLine == 1) {
+			Printf('\t0b%08b,\n', data)
+		} else {
+			Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+		}
 	}
 }
 Printf('} };\n')
