@@ -176,7 +176,7 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 	int bitOffset = y - pageTop * 8;
 	int xCur = x;
 	for (int i = 0; i < wdFont; i++, pTop += fontScaleX_, xCur += fontScaleX_) {
-		uint64_t bits = 0;
+		uint32_t bits = 0;
 		if (fontScaleY_ == 1) {
 			for (int j = 0; j < bytesPerLine; j++, pData++) {
 				bits = (bits << 8) + *pData;
