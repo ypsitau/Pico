@@ -181,12 +181,12 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 			for (int j = 0; j < bytesPerLine; j++, pData++) {
 				bits = (bits << 8) + *pData;
 			}
-		}
-		for (int j = 0; j < bytesPerLine; j++, pData++) {
-			uint8_t data = *pData;
-			for (int k = 0; k < 8; k++, data <<= 1) {
-				for (int s = 0; s < fontScaleY_; s++) {
-					bits = (bits << 1) + ((data & 0x80)? 1 : 0);
+		} else {
+			for (int j = 0; j < bytesPerLine; j++, pData++) {
+				uint8_t data = *pData;
+				for (int k = 0; k < 8; k++, data <<= 1) {
+					uint8_t bit = (data & 0x80)? 1 : 0;
+					for (int s = 0; s < fontScaleY_; s++) bits = (bits << 1) + bit;
 				}
 			}
 		}

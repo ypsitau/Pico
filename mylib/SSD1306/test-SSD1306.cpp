@@ -2325,7 +2325,7 @@ int main()
 	//oled.SetFontScale(4, 8);
 	for (int x = 0; x < 1; x++) {
 		oled.Clear();
-		oled.DrawString(x, 0, "A");
+		oled.DrawString(x, 0, "ABCDEF");
 		oled.Refresh();
 		::sleep_ms(200);
 	}
