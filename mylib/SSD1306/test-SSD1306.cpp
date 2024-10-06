@@ -2323,14 +2323,19 @@ int main()
 	//oled.SetFont(fontBMSPA);
 	oled.SetFont(fontShinonome);
 	//oled.SetFontScale(4, 8);
-	for (int x = 0; x < 1; x++) {
+	for (;;) {
 		oled.Clear();
-		oled.DrawString(x,  0, "@ABCDEFGHIJKLMNO");
-		oled.DrawString(x, 16, "PQRSTUVWXYZ[\\]^_");
-		oled.DrawString(x, 32, "`abcdefghijklmno");
-		oled.DrawString(x, 48, "pqrstuvwxy{|}~");
+		oled.DrawString(0,  0, " !\"#$%&'()*+,-./");
+		oled.DrawString(0, 16, "0123456789:;<=>?");
 		oled.Refresh();
-		::sleep_ms(200);
+		::sleep_ms(1000);
+		oled.Clear();
+		oled.DrawString(0,  0, "@ABCDEFGHIJKLMNO");
+		oled.DrawString(0, 16, "PQRSTUVWXYZ[\\]^_");
+		oled.DrawString(0, 32, "`abcdefghijklmno");
+		oled.DrawString(0, 48, "pqrstuvwxy{|}~");
+		oled.Refresh();
+		::sleep_ms(1000);
 	}
 	for (;;) ;
 #if 0
