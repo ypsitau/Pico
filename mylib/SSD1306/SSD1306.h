@@ -26,6 +26,7 @@ public:
 			int wdSpacing;
 			int codeFirst;
 			int codeLast;
+			int nFontEntries;
 		} info;
 		const FontEntry* pFontEntryTbl[];
 	};
@@ -263,7 +264,7 @@ private:
 	template<class Logic> void DrawLineT(int x0, int y0, int x1, int y1);
 	template<class Logic> void DrawRectT(int x, int y, int width, int height);
 	template<class Logic> void DrawRectFillT(int x, int y, int width, int height);
-	template<class Logic> void DrawCharT(int x, int y, char ch);
+	template<class Logic> void DrawCharT(int x, int y, uint32_t code);
 	template<class Logic> void DrawStringT(int x, int y, const char* str);
 public:
 	void DrawPixel(int x, int y) { DrawPixelT<Logic_Draw>(x, y); }
@@ -295,6 +296,18 @@ private:
 	static void SortPair(int v1, int v2, int* pMin, int* pMax);
 	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
 	static bool AdjustCoord(int* pV, int* pDist, int vLimit);
+};
+
+//------------------------------------------------------------------------------
+// CodeExtractor
+//------------------------------------------------------------------------------
+class CodeExtractor {
+private:
+	int nFollowers_;
+	uint32_t codeUTF32_;
+public:
+	CodeExtractor() : nFollowers_(0), codeUTF32_(0) {}
+	bool FeedChar(char ch, uint32_t* pCodeUTF32);
 };
 
 #endif

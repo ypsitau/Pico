@@ -25,6 +25,10 @@ int main()
 	//oled.SetFont(fontBMSPA);
 	oled.SetFont(Font_Shinonome::font);
 	oled.SetFontScale(1, 1);
+	oled.Clear();
+	oled.DrawString(0, 0, "あいうえお");
+	oled.Refresh();
+#if 0
 	for (;;) {
 		oled.Clear();
 		oled.DrawString(0,  0, " !\"#$%&'()*+,-./");
@@ -42,6 +46,7 @@ int main()
 		oled.Refresh();
 		::sleep_ms(1000);
 	}
+#endif
 	for (;;) ;
 #if 0
 	// SSD1306::Flash()

@@ -164,7 +164,7 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 	}
 }
 
-template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
+template<class Logic> void SSD1306::DrawCharT(int x, int y, uint32_t code)
 {
 	if (!pFontCur_) return;
 	int wdFont = pFontCur_->info.width;
@@ -173,7 +173,8 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 	int width = wdFont * fontScaleX_;
 	int height = htFont * fontScaleY_;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
-	const uint8_t* pData = pFontCur_->GetPointer(ch);
+	const uint8_t* pData = pFontCur_->GetPointer(code);
+	if (!pData) return;
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
@@ -209,9 +210,14 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, char ch)
 template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 {
 	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * fontScaleX_;
+	uint32_t codeUTF32;
+	CodeExtractor codeExtractor;
 	for (const char* p = str; *p; p++) {
-		DrawCharT<Logic>(x, y, *p);
-		x += xStep;
+		if (codeExtractor.FeedChar(*p, &codeUTF32)) {
+			printf("%04x\n", codeUTF32);
+			DrawCharT<Logic>(x, y, codeUTF32);
+			x += xStep;
+		}
 	}
 }
 
@@ -351,5 +357,51 @@ bool SSD1306::AdjustCoord(int* pV, int* pDist, int vLimit)
 //------------------------------------------------------------------------------
 const uint8_t* SSD1306::Font::GetPointer(int code) const
 {
-	return pFontEntryTbl[code - info.codeFirst]->data;
+	if (code < info.codeFirst) return nullptr;
+	if (code <= info.codeLast) return pFontEntryTbl[code - info.codeFirst]->data;
+	int i = info.codeLast - info.codeFirst + 1;
+	for ( ; i < info.nFontEntries; i++) {
+		const FontEntry* pFontEntry = pFontEntryTbl[i];
+		if (pFontEntry->code == code) return pFontEntry->data;
+	}
+	return nullptr;
+}
+
+//------------------------------------------------------------------------------
+// CodeExtractor
+//------------------------------------------------------------------------------
+bool CodeExtractor::FeedChar(char ch, uint32_t* pCodeUTF32)
+{
+	uint8_t chCasted = static_cast<uint8_t>(ch);
+	if ((ch & 0x80) == 0x00) {
+		*pCodeUTF32 = chCasted;
+		return true;
+	} else if (nFollowers_ > 0) {
+		if ((ch & 0xc0) == 0x80) {
+			codeUTF32_ = (codeUTF32_ << 6) | (ch & 0x3f);
+		} else {
+			codeUTF32_ <<= 6;
+		}
+		nFollowers_--;
+		if (nFollowers_ == 0) {
+			*pCodeUTF32 = codeUTF32_;
+			return true;
+		}
+	} else if ((ch & 0xe0) == 0xc0) {
+		codeUTF32_ = ch & 0x1f;
+		nFollowers_ = 1;
+	} else if ((ch & 0xf0) == 0xe0) {
+		codeUTF32_ = ch & 0x0f;
+		nFollowers_ = 2;
+	} else if ((ch & 0xf8) == 0xf0) {
+		codeUTF32_ = ch & 0x07;
+		nFollowers_ = 3;
+	} else if ((ch & 0xfc) == 0xf8) {
+		codeUTF32_ = ch & 0x03;
+		nFollowers_ = 4;
+	} else {
+		codeUTF32_ = ch & 0x01;
+		nFollowers_ = 5;
+	}
+	return false;
 }
