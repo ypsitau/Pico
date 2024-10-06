@@ -2,19 +2,24 @@
 import(font.bdf)
 import(tar)
 
+// shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf
 if (sys.argv.len < 2) {
 	sys.cerr.Println('usage: convbdf bdffile')
 	sys.Exit(1)
 }
 fileName = sys.argv[1]
-//ctx = font.bdf.Context('shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')
 ctx = font.bdf.Context(fileName)
 Printf('// %s\n', ctx.XLogicalFontDescription)
 bytesPerLine = Int(ctx.FONTBOUNDINGBOX.h + 7) / 8
-Printf('const SSD1306::Font font = { { %d, %d, %d, 0, 32, 126 }, {\n',
-	ctx.FONTBOUNDINGBOX.h, ctx.FONTBOUNDINGBOX.w, bytesPerLine)
-Range(32, 127) {|code|
-	charEntry = ctx.charEntryDict[code]
+codeFirst = 32, codeLast = 126
+Printf('const SSD1306::Font font = { { %d, %d, %d, 0, %d, %d }, {\n',
+	ctx.FONTBOUNDINGBOX.w, ctx.FONTBOUNDINGBOX.h, bytesPerLine, codeFirst, codeLast)
+Range(codeFirst, codeLast + 1) {|code|
+	charEntry = ctx.charEntryDict.Get(code)
+	if (!charEntry) {
+		sys.cerr.Printf('error: code#%02x doesn\'t exist', code)
+		sys.Exit(1)
+	}
 	Printf("\t// '%c'\n", code)
 	charEntry.ScanBitmapVert().Each {|data|
 		if (bytesPerLine == 1) {

@@ -18,8 +18,8 @@ public:
 			return data + static_cast<int>(code - info.codeFirst) * info.width * info.bytesPerLine;
 		}
 		struct {
-			int height;
 			int width;
+			int height;
 			int bytesPerLine;
 			int wdSpacing;
 			int codeFirst;
