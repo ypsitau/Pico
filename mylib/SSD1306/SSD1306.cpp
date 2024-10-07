@@ -211,9 +211,9 @@ template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 {
 	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * fontScaleX_;
 	uint32_t codeUTF32;
-	CodeExtractor codeExtractor;
+	UTF8Decoder decoder;
 	for (const char* p = str; *p; p++) {
-		if (codeExtractor.FeedChar(*p, &codeUTF32)) {
+		if (decoder.FeedChar(*p, &codeUTF32)) {
 			printf("%04x\n", codeUTF32);
 			DrawCharT<Logic>(x, y, codeUTF32);
 			x += xStep;
@@ -368,17 +368,17 @@ const uint8_t* SSD1306::Font::GetPointer(int code) const
 }
 
 //------------------------------------------------------------------------------
-// CodeExtractor
+// UTF8Decoder
 //------------------------------------------------------------------------------
-bool CodeExtractor::FeedChar(char ch, uint32_t* pCodeUTF32)
+bool UTF8Decoder::FeedChar(char ch, uint32_t* pCodeUTF32)
 {
 	uint8_t chCasted = static_cast<uint8_t>(ch);
-	if ((ch & 0x80) == 0x00) {
+	if ((chCasted & 0x80) == 0x00) {
 		*pCodeUTF32 = chCasted;
 		return true;
 	} else if (nFollowers_ > 0) {
-		if ((ch & 0xc0) == 0x80) {
-			codeUTF32_ = (codeUTF32_ << 6) | (ch & 0x3f);
+		if ((chCasted & 0xc0) == 0x80) {
+			codeUTF32_ = (codeUTF32_ << 6) | (chCasted & 0x3f);
 		} else {
 			codeUTF32_ <<= 6;
 		}
@@ -387,20 +387,20 @@ bool CodeExtractor::FeedChar(char ch, uint32_t* pCodeUTF32)
 			*pCodeUTF32 = codeUTF32_;
 			return true;
 		}
-	} else if ((ch & 0xe0) == 0xc0) {
-		codeUTF32_ = ch & 0x1f;
+	} else if ((chCasted & 0xe0) == 0xc0) {
+		codeUTF32_ = chCasted & 0x1f;
 		nFollowers_ = 1;
-	} else if ((ch & 0xf0) == 0xe0) {
-		codeUTF32_ = ch & 0x0f;
+	} else if ((chCasted & 0xf0) == 0xe0) {
+		codeUTF32_ = chCasted & 0x0f;
 		nFollowers_ = 2;
-	} else if ((ch & 0xf8) == 0xf0) {
-		codeUTF32_ = ch & 0x07;
+	} else if ((chCasted & 0xf8) == 0xf0) {
+		codeUTF32_ = chCasted & 0x07;
 		nFollowers_ = 3;
-	} else if ((ch & 0xfc) == 0xf8) {
-		codeUTF32_ = ch & 0x03;
+	} else if ((chCasted & 0xfc) == 0xf8) {
+		codeUTF32_ = chCasted & 0x03;
 		nFollowers_ = 4;
 	} else {
-		codeUTF32_ = ch & 0x01;
+		codeUTF32_ = chCasted & 0x01;
 		nFollowers_ = 5;
 	}
 	return false;

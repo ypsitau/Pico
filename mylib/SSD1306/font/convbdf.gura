@@ -21,22 +21,16 @@ Stream('../Font_Shinonome.cpp', 'w') {|fout|
 	
 	''', ctx.XLogicalFontDescription)
 	ctx.charEntryTbl.Each {|charEntry, idx|
-	//Range(codeFirst, codeLast + 1) {|code, idx|
-		//charEntry = ctx.charEntryDict.Get(code)
-		//if (!charEntry) {
-		//	sys.cerr.Printf('error: code#%02x doesn\'t exist', code)
-		//	sys.Exit(1)
-		//}
 		(idx > 0) && fout.Println()
-		code = charEntry.ENCODING
-		if (32 <= code && code < 127) {
-			fout.Printf("// '%c'\n", code)
+		codeUTF32 = charEntry.codeUTF32
+		if (32 <= codeUTF32 && codeUTF32 < 127) {
+			fout.Printf("// '%c'\n", codeUTF32)
 		} else {
-			fout.Printf("// 0x%08x\n", code)
+			fout.Printf("// 0x%08x\n", codeUTF32)
 		}
-		fontEntryName = Format('fontEntry_%08x', code)
+		fontEntryName = Format('fontEntry_%08x', codeUTF32)
 		//fontEntryNames.Add(fontEntryName)
-		fout.Printf('const SSD1306::FontEntry %s = { 0x%08x, {\n', fontEntryName, code)
+		fout.Printf('const SSD1306::FontEntry %s = { 0x%08x, {\n', fontEntryName, codeUTF32)
 		charEntry.ScanBitmapVert().Each {|data|
 			if (bytesPerLine == 1) {
 				fout.Printf('\t0b%08b,\n', data)
