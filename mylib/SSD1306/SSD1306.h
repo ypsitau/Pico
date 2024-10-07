@@ -24,11 +24,10 @@ public:
 			int height;
 			int bytesPerLine;
 			int wdSpacing;
-			int codeFirst;
-			int codeLast;
-			int nFontEntries;
+			int nFontEntries_Extra;
 		} info;
-		const FontEntry* pFontEntryTbl[];
+		const FontEntry* pFontEntryTbl_Basic[96];
+		const FontEntry* pFontEntryTbl_Extra[];
 	};
 	class Logic_Draw {
 	public:

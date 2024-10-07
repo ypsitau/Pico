@@ -1,0 +1,67 @@
+#!/usr/bin/env gurax
+import(font.bdf)
+import(tar)
+
+font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
+	codeUTF32 = this.codeUTF32
+	if (32 <= codeUTF32 && codeUTF32 < 127) {
+		fout.Printf("// '%c'\n", codeUTF32)
+	} else {
+		fout.Printf("// 0x%04x\n", codeUTF32)
+	}
+	fontEntryName = Format('fontEntry_%04x', codeUTF32)
+	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, {\n', fontEntryName, codeUTF32)
+	this.ScanBitmapVert().Each {|data|
+		if (bytesPerLine == 1) {
+			fout.Printf('\t0b%08b,\n', data)
+		} else {
+			fout.Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+		}
+	}
+	fout.Printf('} };\n')
+}
+
+fileNameBasic = 'font/shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf'
+fileNameExtra = 'font/shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnmk16.bdf'
+fontName = 'Shinonome'
+bdfBasic = font.bdf.Context(fileNameBasic)
+bdfExtra = font.bdf.Context(fileNameExtra)
+bytesPerLine = Int(bdfBasic.FONTBOUNDINGBOX.h + 7) / 8
+codeUTF32Tbl_Extra = [0x3042, 0x3044, 0x3046, 0x3048, 0x304a]
+Stream(Format('Font_%s.h', fontName), 'w') {|fout|
+	fout.Printf(eR'''
+	// %s
+	#ifndef FONT_${fontName.Upper()}
+	#define FONT_${fontName.Upper()}
+	#include "SSD1306.h"
+
+	namespace Font_${fontName} {
+	''', bdfBasic.XLogicalFontDescription)
+	bdfBasic.charEntryTbl.Each {|charEntry|
+		if (32 <= charEntry.codeUTF32 && charEntry.codeUTF32 <= 126) {
+			fout.Println()
+			charEntry.GenerateCCode(fout)
+		}
+	}
+	bdfExtra.charEntryTbl.Each {|charEntry|
+		if (charEntry.codeUTF32 in codeUTF32Tbl_Extra) {
+			fout.Println()
+			charEntry.GenerateCCode(fout)
+		}
+	}
+	fout.Println()
+	fout.Printf('const SSD1306::Font font = { { %d, %d, %d, 0, %d }, {\n',
+		bdfBasic.FONTBOUNDINGBOX.w, bdfBasic.FONTBOUNDINGBOX.h, bytesPerLine, codeUTF32Tbl_Extra.len)
+	fout.Printf('\t&fontEntry_%04x,\n', 32..126)
+	fout.Print(R'''
+	}, {
+	''')
+	fout.Printf('\t&fontEntry_%04x,\n', codeUTF32Tbl_Extra)
+	fout.Print(R'''
+	} };
+	
+	}
+
+	#endif
+	''')
+}

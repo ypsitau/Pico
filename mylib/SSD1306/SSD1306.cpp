@@ -357,11 +357,10 @@ bool SSD1306::AdjustCoord(int* pV, int* pDist, int vLimit)
 //------------------------------------------------------------------------------
 const uint8_t* SSD1306::Font::GetPointer(int code) const
 {
-	if (code < info.codeFirst) return nullptr;
-	if (code <= info.codeLast) return pFontEntryTbl[code - info.codeFirst]->data;
-	int i = info.codeLast - info.codeFirst + 1;
-	for ( ; i < info.nFontEntries; i++) {
-		const FontEntry* pFontEntry = pFontEntryTbl[i];
+	if (code < 32) return nullptr;
+	if (code <= 126) return pFontEntryTbl_Basic[code - 32]->data;
+	for (int i = 0; i < info.nFontEntries_Extra; i++) {
+		const FontEntry* pFontEntry = pFontEntryTbl_Extra[i];
 		if (pFontEntry->code == code) return pFontEntry->data;
 	}
 	return nullptr;
