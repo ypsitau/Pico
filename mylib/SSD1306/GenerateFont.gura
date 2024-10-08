@@ -34,7 +34,7 @@ main() = {
 	fontName = 'Shinonome'
 	bdfBasic = font.bdf.Context(fileContent_shnm8x16r_bdf_bz2.Reader().Reader@base64().Reader@bzip2())
 	bdfExtra = font.bdf.Context(fileContent_shnmk16_bdf_bz2.Reader().Reader@base64().Reader@bzip2())
-	codeUTF32Tbl_Extra = [0x3042, 0x3044, 0x3046, 0x3048, 0x304a]
+	codeUTF32Tbl_Extra = [0x3042, 0x3044, 0x3046, 0x3048, 0x304a, 0x304c]
 	Stream(Format('Font_%s.h', fontName), 'w') {|fout|
 		fout.Printf(eR'''
 		// %s
@@ -74,7 +74,10 @@ main() = {
 }
 
 //------------------------------------------------------------------------------
-// shinonome-0.9.11/bdf/shnm8x16r.bdf
+// shnm8x16r.bdf
+// Gurax script to generate the data:
+//   $ gurax -i tar,bzip2 -c "sys.cout.Writer@base64().Writer@bzip2().PipeFrom(
+//     'shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')"
 //------------------------------------------------------------------------------
 fileContent_shnm8x16r_bdf_bz2 = bR'''
 QlpoOTFBWSZTWWyzfHwAM1xfgEAQUGf/9X/33/C//97gYBEe99UAAABexnguC68xt5cAdT27777w
@@ -135,6 +138,9 @@ uvPva8Iv7V3LsW89P+5ryc9ES1aO9rz9ewgLirxEm+Xzaa0LVdzWTUmoRGvu4zLFYjejBTGadnqV
 
 //------------------------------------------------------------------------------
 // shinonome-0.9.11/bdf/shnmk16.bdf
+// Gurax script to generate the data:
+//   $ gurax -i tar,bzip2 -c "sys.cout.Writer@base64().Writer@bzip2().PipeFrom(
+//     'shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnmk16.bdf')"
 //------------------------------------------------------------------------------
 fileContent_shnmk16_bdf_bz2 = bR'''
 QlpoOTFBWSZTWVtsuFwGCYrfgEgQUOf/9X/33/C//97gYvl+AAHknqsgyVorEbADPqjTpkaV0252
