@@ -15,19 +15,15 @@ class SSD1306 {
 public:
 	struct FontEntry {
 		uint32_t code;
+		int width;
+		int height;
 		uint8_t data[];
 	};
 	struct Font {
-		const uint8_t* GetPointer(int code) const;
-		struct {
-			int width;
-			int height;
-			int bytesPerLine;
-			int wdSpacing;
-			int nFontEntries_Extra;
-		} info;
+		const FontEntry* GetFontEntry(uint32_t code) const;
 		const FontEntry* pFontEntryTbl_Basic[96];
-		const FontEntry* pFontEntryTbl_Extra[];
+		int nFontEntries_Extra;
+		const FontEntry* pFontEntries_Extra[];
 	};
 	class Logic_Draw {
 	public:
@@ -263,6 +259,7 @@ private:
 	template<class Logic> void DrawLineT(int x0, int y0, int x1, int y1);
 	template<class Logic> void DrawRectT(int x, int y, int width, int height);
 	template<class Logic> void DrawRectFillT(int x, int y, int width, int height);
+	template<class Logic> void DrawCharT(int x, int y, const FontEntry* pFontEntry);
 	template<class Logic> void DrawCharT(int x, int y, uint32_t code);
 	template<class Logic> void DrawStringT(int x, int y, const char* str);
 public:
@@ -272,7 +269,7 @@ public:
 	void DrawLine(int x0, int y0, int x1, int y1);
 	void DrawRect(int x, int y, int width, int height);
 	void DrawRectFill(int x, int y, int width, int height);
-	void DrawChar(int x, int y, char ch);
+	void DrawChar(int x, int y, uint32_t code);
 	void DrawString(int x, int y, const char* str);
 	void ErasePixel(int x, int y) { DrawPixelT<Logic_Erase>(x, y); }
 	void EraseHLine(int x, int y, int width);
@@ -280,7 +277,7 @@ public:
 	void EraseLine(int x0, int y0, int x1, int y1);
 	void EraseRect(int x, int y, int width, int height);
 	void EraseRectFill(int x, int y, int width, int height);
-	void EraseChar(int x, int y, char ch);
+	void EraseChar(int x, int y, uint32_t code);
 	void EraseString(int x, int y, const char* str);
 	void InvertPixel(int x, int y) { DrawPixelT<Logic_Invert>(x, y); }
 	void InvertHLine(int x, int y, int width);
@@ -288,7 +285,7 @@ public:
 	void InvertLine(int x0, int y0, int x1, int y1);
 	void InvertRect(int x, int y, int width, int height);
 	void InvertRectFill(int x, int y, int width, int height);
-	void InvertChar(int x, int y, char ch);
+	void InvertChar(int x, int y, uint32_t code);
 	void InvertString(int x, int y, const char* str);
 public:
 private:

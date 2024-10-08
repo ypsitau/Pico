@@ -164,17 +164,16 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 	}
 }
 
-template<class Logic> void SSD1306::DrawCharT(int x, int y, uint32_t code)
+template<class Logic> void SSD1306::DrawCharT(int x, int y, const FontEntry* pFontEntry)
 {
 	if (!pFontCur_) return;
-	int wdFont = pFontCur_->info.width;
-	int htFont = pFontCur_->info.height;
-	int bytesPerLine = pFontCur_->info.bytesPerLine;
+	int wdFont = pFontEntry->width;
+	int htFont = pFontEntry->height;
+	int bytesPerLine = (htFont + 7) / 8;
 	int width = wdFont * fontScaleX_;
 	int height = htFont * fontScaleY_;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
-	const uint8_t* pData = pFontCur_->GetPointer(code);
-	if (!pData) return;
+	const uint8_t* pData = pFontEntry->data;
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
@@ -207,16 +206,24 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, uint32_t code)
 	}
 }
 
+template<class Logic> void SSD1306::DrawCharT(int x, int y, uint32_t code)
+{
+	const FontEntry* pFontEntry = pFontCur_->GetFontEntry(code);
+	if (pFontEntry) DrawCharT<Logic>(x, y, pFontEntry);
+}
+
 template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 {
-	int xStep = (pFontCur_->info.width + pFontCur_->info.wdSpacing) * fontScaleX_;
-	uint32_t codeUTF32;
+	uint32_t code;
 	UTF8Decoder decoder;
 	for (const char* p = str; *p; p++) {
-		if (decoder.FeedChar(*p, &codeUTF32)) {
-			printf("%04x\n", codeUTF32);
-			DrawCharT<Logic>(x, y, codeUTF32);
-			x += xStep;
+		if (decoder.FeedChar(*p, &code)) {
+			printf("%04x\n", code);
+			const FontEntry* pFontEntry = pFontCur_->GetFontEntry(code);
+			if (pFontEntry) {
+				DrawCharT<Logic>(x, y, pFontEntry);
+				x += pFontEntry->width * fontScaleX_;
+			}
 		}
 	}
 }
@@ -246,9 +253,9 @@ void SSD1306::DrawRectFill(int x, int y, int width, int height)
 	DrawRectFillT<Logic_Draw>(x, y, width, height);
 }
 
-void SSD1306::DrawChar(int x, int y, char ch)
+void SSD1306::DrawChar(int x, int y, uint32_t code)
 {
-	DrawCharT<Logic_Draw>(x, y, ch);
+	DrawCharT<Logic_Draw>(x, y, code);
 }
 
 void SSD1306::DrawString(int x, int y, const char* str)
@@ -281,9 +288,9 @@ void SSD1306::EraseRectFill(int x, int y, int width, int height)
 	DrawRectFillT<Logic_Erase>(x, y, width, height);
 }
 
-void SSD1306::EraseChar(int x, int y, char ch)
+void SSD1306::EraseChar(int x, int y, uint32_t code)
 {
-	DrawCharT<Logic_Erase>(x, y, ch);
+	DrawCharT<Logic_Erase>(x, y, code);
 }
 
 void SSD1306::EraseString(int x, int y, const char* str)
@@ -316,9 +323,9 @@ void SSD1306::InvertRectFill(int x, int y, int width, int height)
 	DrawRectFillT<Logic_Invert>(x, y, width, height);
 }
 
-void SSD1306::InvertChar(int x, int y, char ch)
+void SSD1306::InvertChar(int x, int y, uint32_t code)
 {
-	DrawCharT<Logic_Invert>(x, y, ch);
+	DrawCharT<Logic_Invert>(x, y, code);
 }
 
 void SSD1306::InvertString(int x, int y, const char* str)
@@ -355,13 +362,13 @@ bool SSD1306::AdjustCoord(int* pV, int* pDist, int vLimit)
 //------------------------------------------------------------------------------
 // SSD1306::Font
 //------------------------------------------------------------------------------
-const uint8_t* SSD1306::Font::GetPointer(int code) const
+const SSD1306::FontEntry* SSD1306::Font::GetFontEntry(uint32_t code) const
 {
 	if (code < 32) return nullptr;
-	if (code <= 126) return pFontEntryTbl_Basic[code - 32]->data;
-	for (int i = 0; i < info.nFontEntries_Extra; i++) {
-		const FontEntry* pFontEntry = pFontEntryTbl_Extra[i];
-		if (pFontEntry->code == code) return pFontEntry->data;
+	if (code <= 126) return pFontEntryTbl_Basic[code - 32];
+	for (int i = 0; i < nFontEntries_Extra; i++) {
+		const FontEntry* pFontEntry = pFontEntries_Extra[i];
+		if (pFontEntry->code == code) return pFontEntry;
 	}
 	return nullptr;
 }

@@ -10,7 +10,8 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 		fout.Printf("// 0x%04x\n", codeUTF32)
 	}
 	fontEntryName = Format('fontEntry_%04x', codeUTF32)
-	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, {\n', fontEntryName, codeUTF32)
+	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, %d, %d, {\n',
+						fontEntryName, codeUTF32, this.BBX.w, this.BBX.h)
 	this.ScanBitmapVert().Each {|data|
 		if (bytesPerLine == 1) {
 			fout.Printf('\t0b%08b,\n', data)
@@ -50,11 +51,10 @@ Stream(Format('Font_%s.h', fontName), 'w') {|fout|
 		}
 	}
 	fout.Println()
-	fout.Printf('const SSD1306::Font font = { { %d, %d, %d, 0, %d }, {\n',
-		bdfBasic.FONTBOUNDINGBOX.w, bdfBasic.FONTBOUNDINGBOX.h, bytesPerLine, codeUTF32Tbl_Extra.len)
+	fout.Printf('const SSD1306::Font font = { {\n')
 	fout.Printf('\t&fontEntry_%04x,\n', 32..126)
-	fout.Print(R'''
-	}, {
+	fout.Print(eR'''
+	}, ${codeUTF32Tbl_Extra.len}, {
 	''')
 	fout.Printf('\t&fontEntry_%04x,\n', codeUTF32Tbl_Extra)
 	fout.Print(R'''
