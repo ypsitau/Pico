@@ -26,7 +26,8 @@ int main()
 	oled.SetFont(Font_Shinonome::font);
 	oled.SetFontScale(1, 1);
 	oled.Clear();
-	oled.DrawString(0, 0, "本日はあああ晴天なり");
+	oled.DrawString(0, 0, "本日は晴天なり");
+	oled.DrawString(0, 16, "庭には二羽鶏がいる");
 	oled.Refresh();
 #if 0
 	for (;;) {
