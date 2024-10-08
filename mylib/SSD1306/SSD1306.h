@@ -21,6 +21,7 @@ public:
 	};
 	struct Font {
 		const FontEntry* GetFontEntry(uint32_t code) const;
+		const FontEntry* pFontEntry_Invalid;
 		const FontEntry* pFontEntryTbl_Basic[96];
 		int nFontEntries_Extra;
 		const FontEntry* pFontEntries_Extra[];

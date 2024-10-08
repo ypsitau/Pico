@@ -166,7 +166,7 @@ template<class Logic> void SSD1306::DrawRectFillT(int x, int y, int width, int h
 
 template<class Logic> void SSD1306::DrawCharT(int x, int y, const FontEntry* pFontEntry)
 {
-	if (!pFontCur_) return;
+	if (!pFontEntry) return;
 	int wdFont = pFontEntry->width;
 	int htFont = pFontEntry->height;
 	int bytesPerLine = (htFont + 7) / 8;
@@ -218,11 +218,11 @@ template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 	UTF8Decoder decoder;
 	for (const char* p = str; *p; p++) {
 		if (decoder.FeedChar(*p, &code)) {
-			printf("%04x\n", code);
 			const FontEntry* pFontEntry = pFontCur_->GetFontEntry(code);
 			if (pFontEntry) {
 				DrawCharT<Logic>(x, y, pFontEntry);
 				x += pFontEntry->width * fontScaleX_;
+			} else {
 			}
 		}
 	}
