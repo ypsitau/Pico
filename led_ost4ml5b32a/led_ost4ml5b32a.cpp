@@ -23,6 +23,8 @@ void StartProgram(const pio_program& program, uint32_t numIn, bool shift_right =
 	pio_sm_unclaim(pio, idxSm);
 }
 
+#define ArrayNumberOf(x) (sizeof(x) / sizeof(x[0]))
+
 int main()
 {
 	stdio_init_all();
@@ -30,24 +32,32 @@ int main()
 	gpio_init(15);
 	gpio_set_dir(14, GPIO_OUT);
 	gpio_set_dir(15, GPIO_OUT);
-	for (int j = 0; j < 255; j++) {
-		printf("%d\n", j);
-		sleep_ms(3);
-		uint8_t bitPattern = j;
+	static const uint32_t bitPatterns[] = {
+		0x800080, 0x008000, 0x808080,
+	};
+	for (int j = 0; j < 8 * 3; j++) {
+		gpio_put(14, false);
+		gpio_put(15, false);
+		sleep_us(10);
+		gpio_put(14, true);
+		gpio_put(15, false);
+		sleep_us(10);
+	}
+	for (int j = 0; j < ArrayNumberOf(bitPatterns); j++) {
+		uint32_t bitPattern = bitPatterns[j];
 		for (int i = 0; i < 24; i++, bitPattern <<= 1) {
-			if (bitPattern & 0x80) {
+			if (bitPattern & 0x800000) {
 				gpio_put(14, true);
 				gpio_put(15, true);
 			} else {
 				gpio_put(14, false);
 				gpio_put(15, false);
 			}
-			sleep_us(1);
+			sleep_us(80);
 			gpio_put(14, true);
 			gpio_put(15, false);
-			sleep_us(1);
+			sleep_us(80);
 		}
-		sleep_ms(100);
 	}
 	for (;;) tight_loop_contents();
 }
