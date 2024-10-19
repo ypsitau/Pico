@@ -35,6 +35,42 @@ int main()
 	static const uint32_t bitPatterns[] = {
 		0x800080, 0x008000, 0x808080,
 	};
+#if 0
+	for (;;) {
+		gpio_put(14, true);
+		gpio_put(15, true);
+		sleep_us(10);
+		gpio_put(14, true);
+		gpio_put(15, false);
+		sleep_us(10);
+		gpio_put(14, false);
+		gpio_put(15, false);
+		sleep_us(10);
+	}
+#endif
+	for (int j = 0; j < 8 * 3; j++) {
+		gpio_put(14, false);
+		gpio_put(15, false);
+		sleep_us(40);
+		gpio_put(14, true);
+		gpio_put(15, false);
+		sleep_us(40);
+	}
+	sleep_ms(100);
+	for (;;) {
+		uint32_t bitPattern = 0x800000;
+		for (int j = 0; j < 24; j++, bitPattern <<= 1) {
+			bool flag = (bitPattern & 0x800000)? true : false;
+			gpio_put(14, flag);
+			gpio_put(15, flag);
+			sleep_us(40);
+			gpio_put(14, true);
+			gpio_put(15, false);
+			sleep_us(40);
+		}
+		sleep_ms(100);
+	}
+#if 0
 	for (int j = 0; j < 8 * 3; j++) {
 		gpio_put(14, false);
 		gpio_put(15, false);
@@ -59,5 +95,6 @@ int main()
 			sleep_us(80);
 		}
 	}
+#endif
 	for (;;) tight_loop_contents();
 }

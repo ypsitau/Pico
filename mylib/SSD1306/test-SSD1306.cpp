@@ -25,12 +25,13 @@ int main()
 	//oled.SetFont(fontBMSPA);
 	oled.SetFont(Font_Shinonome::font);
 	oled.SetFontScale(1, 1);
-	oled.Clear();
-	oled.DrawString(0, 0, "本日は晴天なり");
-	oled.DrawString(0, 16, "庭には二羽鶏がいる");
-	oled.Refresh();
-#if 0
+#if 1
 	for (;;) {
+		oled.Clear();
+		oled.DrawString(0, 0, "本日は晴天なり");
+		oled.DrawString(0, 32, "庭には二羽鶏がいる");
+		oled.Refresh();
+		::sleep_ms(1000);
 		oled.Clear();
 		oled.DrawString(0,  0, " !\"#$%&'()*+,-./");
 		oled.DrawString(0, 32, "0123456789:;<=>?");
