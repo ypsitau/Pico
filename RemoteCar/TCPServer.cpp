@@ -6,45 +6,36 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <memory>
 #include "TCPServer.h"
-
-TCPServer* TCPServer::Init()
-{
-	TCPServer *pTCPServer = (TCPServer*)calloc(1, sizeof(TCPServer));
-	if (!pTCPServer) {
-		DEBUG_printf("failed to allocate pTCPServer\n");
-		return NULL;
-	}
-	return pTCPServer;
-}
 
 bool TCPServer::Open()
 {
 	DEBUG_printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), TCP_PORT);
 
-	struct tcp_pcb *pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
+	struct tcp_pcb* pcb = ::tcp_new_ip_type(IPADDR_TYPE_ANY);
 	if (!pcb) {
 		DEBUG_printf("failed to create pcb\n");
 		return false;
 	}
 
-	err_t err = tcp_bind(pcb, NULL, TCP_PORT);
+	err_t err = ::tcp_bind(pcb, NULL, TCP_PORT);
 	if (err) {
 		DEBUG_printf("failed to bind to port %u\n", TCP_PORT);
 		return false;
 	}
 
-	server_pcb_ = tcp_listen_with_backlog(pcb, 1);
+	server_pcb_ = ::tcp_listen_with_backlog(pcb, 1);
 	if (!server_pcb_) {
 		DEBUG_printf("failed to listen\n");
 		if (pcb) {
-			tcp_close(pcb);
+			::tcp_close(pcb);
 		}
 		return false;
 	}
 
-	tcp_arg(server_pcb_, this);
-	tcp_accept(server_pcb_, HandlerStub_accept);
+	::tcp_arg(server_pcb_, this);
+	::tcp_accept(server_pcb_, HandlerStub_accept);
 
 	return true;
 }
@@ -53,28 +44,28 @@ bool TCPServer::Close()
 {
 	bool rtn = true;
 	if (client_pcb_ != NULL) {
-		tcp_arg(client_pcb_, NULL);
-		tcp_poll(client_pcb_, NULL, 0);
-		tcp_sent(client_pcb_, NULL);
-		tcp_recv(client_pcb_, NULL);
-		tcp_err(client_pcb_, NULL);
-		err_t err = tcp_close(client_pcb_);
+		::tcp_arg(client_pcb_, NULL);
+		::tcp_poll(client_pcb_, NULL, 0);
+		::tcp_sent(client_pcb_, NULL);
+		::tcp_recv(client_pcb_, NULL);
+		::tcp_err(client_pcb_, NULL);
+		err_t err = ::tcp_close(client_pcb_);
 		if (err != ERR_OK) {
 			DEBUG_printf("close failed %d, calling abort\n", err);
-			tcp_abort(client_pcb_);
+			::tcp_abort(client_pcb_);
 			rtn = false;
 		}
 		client_pcb_ = NULL;
 	}
 	if (server_pcb_) {
-		tcp_arg(server_pcb_, NULL);
-		tcp_close(server_pcb_);
+		::tcp_arg(server_pcb_, NULL);
+		::tcp_close(server_pcb_);
 		server_pcb_ = NULL;
 	}
 	return rtn;
 }
 
-err_t TCPServer::tcp_server_result(int status)
+void TCPServer::Complete(int status)
 {
 	if (status == 0) {
 		DEBUG_printf("test success\n");
@@ -82,7 +73,7 @@ err_t TCPServer::tcp_server_result(int status)
 		DEBUG_printf("test failed %d\n", status);
 	}
 	complete_ = true;
-	return Close();
+	Close();
 }
 
 err_t TCPServer::tcp_server_send_data(struct tcp_pcb* tpcb)
@@ -97,10 +88,11 @@ err_t TCPServer::tcp_server_send_data(struct tcp_pcb* tpcb)
 	// can use this method to cause an assertion in debug mode, if this method is called when
 	// cyw43_arch_lwip_begin IS needed
 	cyw43_arch_lwip_check();
-	err_t err = tcp_write(tpcb, buffer_sent_, BUF_SIZE, TCP_WRITE_FLAG_COPY);
+	err_t err = ::tcp_write(tpcb, buffer_sent_, BUF_SIZE, TCP_WRITE_FLAG_COPY);
 	if (err != ERR_OK) {
 		DEBUG_printf("Failed to write data %d\n", err);
-		return tcp_server_result(-1);
+		Complete(-1);
+		return ERR_VAL;
 	}
 	return ERR_OK;
 }
@@ -110,17 +102,17 @@ err_t TCPServer::Handler_accept(struct tcp_pcb* client_pcb, err_t err)
 {
 	if (err != ERR_OK || client_pcb == NULL) {
 		DEBUG_printf("Failure in accept\n");
-		tcp_server_result(err);
+		Complete(err);
 		return ERR_VAL;
 	}
 	DEBUG_printf("Client connected\n");
 
 	client_pcb_ = client_pcb;
-	tcp_arg(client_pcb, this);
-	tcp_sent(client_pcb, HandlerStub_sent);
-	tcp_recv(client_pcb, HandlerStub_recv);
-	tcp_poll(client_pcb, HandlerStub_poll, POLL_TIME_S * 2);
-	tcp_err(client_pcb, HandlerStub_err);
+	::tcp_arg(client_pcb, this);
+	::tcp_sent(client_pcb, HandlerStub_sent);
+	::tcp_recv(client_pcb, HandlerStub_recv);
+	::tcp_poll(client_pcb, HandlerStub_poll, POLL_TIME_S * 2);
+	::tcp_err(client_pcb, HandlerStub_err);
 
 	return tcp_server_send_data(client_pcb_);
 }
@@ -140,40 +132,42 @@ err_t TCPServer::Handler_sent(struct tcp_pcb *tpcb, u16_t len)
 	return ERR_OK;
 }
 
-err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+err_t TCPServer::Handler_recv(struct tcp_pcb* tpcb, struct pbuf* p, err_t err)
 {
 	if (!p) {
-		return tcp_server_result(-1);
+		Complete(-1);
+		return ERR_VAL;
 	}
 	// this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
 	// can use this method to cause an assertion in debug mode, if this method is called when
 	// cyw43_arch_lwip_begin IS needed
-	cyw43_arch_lwip_check();
+	::cyw43_arch_lwip_check();
 	if (p->tot_len > 0) {
 		DEBUG_printf("TCPServer::Handler_recv %d/%d err %d\n", p->tot_len, recv_len_, err);
 
 		// Receive the buffer
 		const uint16_t buffer_left = BUF_SIZE - recv_len_;
-		recv_len_ += pbuf_copy_partial(p, buffer_recv_ + recv_len_,
+		recv_len_ += ::pbuf_copy_partial(p, buffer_recv_ + recv_len_,
 											p->tot_len > buffer_left ? buffer_left : p->tot_len, 0);
-		tcp_recved(tpcb, p->tot_len);
+		::tcp_recved(tpcb, p->tot_len);
 	}
-	pbuf_free(p);
+	::pbuf_free(p);
 
 	// Have we have received the whole buffer
 	if (recv_len_ == BUF_SIZE) {
 
 		// check it matches
-		if (memcmp(buffer_sent_, buffer_recv_, BUF_SIZE) != 0) {
+		if (::memcmp(buffer_sent_, buffer_recv_, BUF_SIZE) != 0) {
 			DEBUG_printf("buffer mismatch\n");
-			return tcp_server_result(-1);
+			Complete(-1);
+			return ERR_VAL;
 		}
 		DEBUG_printf("TCPServer::Handler_recv buffer ok\n");
 
 		// Test complete?
 		run_count_++;
 		if (run_count_ >= TEST_ITERATIONS) {
-			tcp_server_result(0);
+			Complete(0);
 			return ERR_OK;
 		}
 
@@ -183,29 +177,44 @@ err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 	return ERR_OK;
 }
 
-err_t TCPServer::Handler_poll(struct tcp_pcb *tpcb)
+err_t TCPServer::Handler_poll(struct tcp_pcb* tpcb)
 {
 	DEBUG_printf("tcp_server_poll_fn\n");
-	return tcp_server_result(-1); // no response is an error?
+	Complete(-1); // no response is an error?
+	return ERR_VAL;
 }
 
 void TCPServer::Handler_err(err_t err)
 {
 	if (err != ERR_ABRT) {
 		DEBUG_printf("tcp_client_err_fn %d\n", err);
-		tcp_server_result(err);
+		Complete(err);
 	}
 }
 
-void run_tcp_server_test(void)
+int TCPServer::Test()
 {
-	TCPServer *pTCPServer = TCPServer::Init();
+	if (::cyw43_arch_init()) {
+		::printf("failed to initialise\n");
+		return 1;
+	}
+
+	::cyw43_arch_enable_sta_mode();
+
+	::printf("Connecting to Wi-Fi...\n");
+	if (::cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+		::printf("failed to connect.\n");
+		return 1;
+	} else {
+		::printf("Connected.\n");
+	}
+	std::unique_ptr<TCPServer> pTCPServer(new TCPServer());
 	if (!pTCPServer) {
-		return;
+		return 1;
 	}
 	if (!pTCPServer->Open()) {
-		pTCPServer->tcp_server_result(-1);
-		return;
+		pTCPServer->Complete(-1);
+		return 1;
 	}
 	while(!pTCPServer->complete_) {
 		// the following #ifdef is only here so this same example can be used in multiple modes;
@@ -221,29 +230,9 @@ void run_tcp_server_test(void)
 		// if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
 		// is done via interrupt in the background. This sleep is just an example of some (blocking)
 		// work you might be doing.
-		sleep_ms(1000);
+		::sleep_ms(1000);
 #endif
 	}
-	free(pTCPServer);
-}
-
-int TCPServer::Test()
-{
-	if (cyw43_arch_init()) {
-		printf("failed to initialise\n");
-		return 1;
-	}
-
-	cyw43_arch_enable_sta_mode();
-
-	printf("Connecting to Wi-Fi...\n");
-	if (cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-		printf("failed to connect.\n");
-		return 1;
-	} else {
-		printf("Connected.\n");
-	}
-	run_tcp_server_test();
-	cyw43_arch_deinit();
+	::cyw43_arch_deinit();
 	return 0;
 }
