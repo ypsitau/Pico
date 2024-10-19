@@ -25,6 +25,8 @@ public:
 	static TCPServer* Init();
 	bool Open();
 	bool Close();
+	err_t tcp_server_send_data(struct tcp_pcb* tpcb);
+	err_t tcp_server_result(int status);
 	static int Test();
 private:
 	err_t Handler_accept(struct tcp_pcb* client_pcb, err_t err);

@@ -74,35 +74,33 @@ bool TCPServer::Close()
 	return rtn;
 }
 
-err_t tcp_server_result(void *arg, int status)
+err_t TCPServer::tcp_server_result(int status)
 {
-	TCPServer *pTCPServer = (TCPServer*)arg;
 	if (status == 0) {
 		DEBUG_printf("test success\n");
 	} else {
 		DEBUG_printf("test failed %d\n", status);
 	}
-	pTCPServer->complete_ = true;
-	return pTCPServer->Close();
+	complete_ = true;
+	return Close();
 }
 
-err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
+err_t TCPServer::tcp_server_send_data(struct tcp_pcb* tpcb)
 {
-	TCPServer *pTCPServer = (TCPServer*)arg;
 	for(int i=0; i< BUF_SIZE; i++) {
-		pTCPServer->buffer_sent_[i] = rand();
+		buffer_sent_[i] = rand();
 	}
 
-	pTCPServer->sent_len_ = 0;
+	sent_len_ = 0;
 	DEBUG_printf("Writing %ld bytes to client\n", BUF_SIZE);
 	// this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
 	// can use this method to cause an assertion in debug mode, if this method is called when
 	// cyw43_arch_lwip_begin IS needed
 	cyw43_arch_lwip_check();
-	err_t err = tcp_write(tpcb, pTCPServer->buffer_sent_, BUF_SIZE, TCP_WRITE_FLAG_COPY);
+	err_t err = tcp_write(tpcb, buffer_sent_, BUF_SIZE, TCP_WRITE_FLAG_COPY);
 	if (err != ERR_OK) {
 		DEBUG_printf("Failed to write data %d\n", err);
-		return tcp_server_result(arg, -1);
+		return tcp_server_result(-1);
 	}
 	return ERR_OK;
 }
@@ -112,7 +110,7 @@ err_t TCPServer::Handler_accept(struct tcp_pcb* client_pcb, err_t err)
 {
 	if (err != ERR_OK || client_pcb == NULL) {
 		DEBUG_printf("Failure in accept\n");
-		tcp_server_result(this, err);
+		tcp_server_result(err);
 		return ERR_VAL;
 	}
 	DEBUG_printf("Client connected\n");
@@ -124,7 +122,7 @@ err_t TCPServer::Handler_accept(struct tcp_pcb* client_pcb, err_t err)
 	tcp_poll(client_pcb, HandlerStub_poll, POLL_TIME_S * 2);
 	tcp_err(client_pcb, HandlerStub_err);
 
-	return tcp_server_send_data(this, client_pcb_);
+	return tcp_server_send_data(client_pcb_);
 }
 
 err_t TCPServer::Handler_sent(struct tcp_pcb *tpcb, u16_t len)
@@ -145,7 +143,7 @@ err_t TCPServer::Handler_sent(struct tcp_pcb *tpcb, u16_t len)
 err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 {
 	if (!p) {
-		return tcp_server_result(this, -1);
+		return tcp_server_result(-1);
 	}
 	// this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
 	// can use this method to cause an assertion in debug mode, if this method is called when
@@ -168,19 +166,19 @@ err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 		// check it matches
 		if (memcmp(buffer_sent_, buffer_recv_, BUF_SIZE) != 0) {
 			DEBUG_printf("buffer mismatch\n");
-			return tcp_server_result(this, -1);
+			return tcp_server_result(-1);
 		}
 		DEBUG_printf("TCPServer::Handler_recv buffer ok\n");
 
 		// Test complete?
 		run_count_++;
 		if (run_count_ >= TEST_ITERATIONS) {
-			tcp_server_result(this, 0);
+			tcp_server_result(0);
 			return ERR_OK;
 		}
 
 		// Send another buffer
-		return tcp_server_send_data(this, client_pcb_);
+		return tcp_server_send_data(client_pcb_);
 	}
 	return ERR_OK;
 }
@@ -188,14 +186,14 @@ err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
 err_t TCPServer::Handler_poll(struct tcp_pcb *tpcb)
 {
 	DEBUG_printf("tcp_server_poll_fn\n");
-	return tcp_server_result(this, -1); // no response is an error?
+	return tcp_server_result(-1); // no response is an error?
 }
 
 void TCPServer::Handler_err(err_t err)
 {
 	if (err != ERR_ABRT) {
 		DEBUG_printf("tcp_client_err_fn %d\n", err);
-		tcp_server_result(this, err);
+		tcp_server_result(err);
 	}
 }
 
@@ -206,7 +204,7 @@ void run_tcp_server_test(void)
 		return;
 	}
 	if (!pTCPServer->Open()) {
-		tcp_server_result(pTCPServer, -1);
+		pTCPServer->tcp_server_result(-1);
 		return;
 	}
 	while(!pTCPServer->complete_) {
