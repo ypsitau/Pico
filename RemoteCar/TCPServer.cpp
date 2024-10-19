@@ -9,6 +9,28 @@
 #include <memory>
 #include "TCPServer.h"
 
+bool TCPServer::ConnectWifi()
+{
+	if (::cyw43_arch_init()) {
+		::printf("failed to initialise\n");
+		return 1;
+	}
+	::cyw43_arch_enable_sta_mode();
+	::printf("Connecting to Wi-Fi...\n");
+	if (::cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
+		::printf("failed to connect.\n");
+		return 1;
+	} else {
+		::printf("Connected.\n");
+	}
+	return true;
+}
+
+bool TCPServer::DisconnectWifi()
+{
+	::cyw43_arch_deinit();
+}
+
 bool TCPServer::Open()
 {
 	DEBUG_printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), TCP_PORT);
@@ -194,24 +216,8 @@ void TCPServer::Handler_err(err_t err)
 
 int TCPServer::Test()
 {
-	if (::cyw43_arch_init()) {
-		::printf("failed to initialise\n");
-		return 1;
-	}
-
-	::cyw43_arch_enable_sta_mode();
-
-	::printf("Connecting to Wi-Fi...\n");
-	if (::cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 30000)) {
-		::printf("failed to connect.\n");
-		return 1;
-	} else {
-		::printf("Connected.\n");
-	}
 	std::unique_ptr<TCPServer> pTCPServer(new TCPServer());
-	if (!pTCPServer) {
-		return 1;
-	}
+	if (!TCPServer::ConnectWifi()) return 1;
 	if (!pTCPServer->Open()) {
 		pTCPServer->Complete(-1);
 		return 1;
@@ -233,6 +239,6 @@ int TCPServer::Test()
 		::sleep_ms(1000);
 #endif
 	}
-	::cyw43_arch_deinit();
+	TCPServer::DisconnectWifi();
 	return 0;
 }

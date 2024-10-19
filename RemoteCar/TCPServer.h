@@ -22,6 +22,9 @@ public:
 	int recv_len_;
 	int run_count_;
 public:
+	static bool ConnectWifi();
+	static bool DisconnectWifi();
+public:
 	bool Open();
 	bool Close();
 	err_t tcp_server_send_data(struct tcp_pcb* tpcb);
