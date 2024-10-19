@@ -57,7 +57,8 @@ target_include_directories(RemoteCar PRIVATE
 # Add any user requested libraries
 target_link_libraries(RemoteCar 
 		hardware_i2c
-        pico_cyw43_arch_lwip_threadsafe_background
+		pico_cyw43_arch_lwip_poll
+        #pico_cyw43_arch_lwip_threadsafe_background
 		)
 
 target_compile_definitions(RemoteCar PRIVATE

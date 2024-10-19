@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <memory>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 #include "TCPServer.h"
@@ -23,5 +24,18 @@ int main()
 	gpio_pull_up(I2C_SCL);
 	// For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
-	TCPServer::Test();
+	std::unique_ptr<TCPServer> pTCPServer(new TCPServer());
+	if (!TCPServer::ConnectWifi(WIFI_SSID, WIFI_PASSWORD, 30000)) {
+		::printf("failed to connect: %s\n", WIFI_SSID);
+		return 1;
+	}
+	if (!pTCPServer->Wait(4242)) {
+		pTCPServer->Complete(-1);
+		return 1;
+	}
+	while (!pTCPServer->complete_) {
+		TCPServer::PollWifi(1000);
+	}
+	TCPServer::DisconnectWifi();
+	return 0;
 }
