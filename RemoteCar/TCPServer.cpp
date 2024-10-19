@@ -8,8 +8,9 @@
 #include <stdlib.h>
 #include "TCPServer.h"
 
-static TCP_SERVER_T* tcp_server_init(void) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)calloc(1, sizeof(TCP_SERVER_T));
+static TCPServer* tcp_server_init(void)
+{
+    TCPServer *state = (TCPServer*)calloc(1, sizeof(TCPServer));
     if (!state) {
         DEBUG_printf("failed to allocate state\n");
         return NULL;
@@ -17,8 +18,9 @@ static TCP_SERVER_T* tcp_server_init(void) {
     return state;
 }
 
-static err_t tcp_server_close(void *arg) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+static err_t tcp_server_close(void *arg)
+{
+    TCPServer *state = (TCPServer*)arg;
     err_t err = ERR_OK;
     if (state->client_pcb != NULL) {
         tcp_arg(state->client_pcb, NULL);
@@ -42,8 +44,9 @@ static err_t tcp_server_close(void *arg) {
     return err;
 }
 
-static err_t tcp_server_result(void *arg, int status) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+static err_t tcp_server_result(void *arg, int status)
+{
+    TCPServer *state = (TCPServer*)arg;
     if (status == 0) {
         DEBUG_printf("test success\n");
     } else {
@@ -53,8 +56,9 @@ static err_t tcp_server_result(void *arg, int status) {
     return tcp_server_close(arg);
 }
 
-static err_t tcp_server_sent(void *arg, struct tcp_pcb *tpcb, u16_t len) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+static err_t tcp_server_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
+{
+    TCPServer *state = (TCPServer*)arg;
     DEBUG_printf("tcp_server_sent %u\n", len);
     state->sent_len += len;
 
@@ -70,7 +74,7 @@ static err_t tcp_server_sent(void *arg, struct tcp_pcb *tpcb, u16_t len) {
 
 err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
 {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+    TCPServer *state = (TCPServer*)arg;
     for(int i=0; i< BUF_SIZE; i++) {
         state->buffer_sent[i] = rand();
     }
@@ -89,8 +93,9 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
     return ERR_OK;
 }
 
-err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+{
+    TCPServer *state = (TCPServer*)arg;
     if (!p) {
         return tcp_server_result(arg, -1);
     }
@@ -132,20 +137,23 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err
     return ERR_OK;
 }
 
-static err_t tcp_server_poll(void *arg, struct tcp_pcb *tpcb) {
+static err_t tcp_server_poll(void *arg, struct tcp_pcb *tpcb)
+{
     DEBUG_printf("tcp_server_poll_fn\n");
     return tcp_server_result(arg, -1); // no response is an error?
 }
 
-static void tcp_server_err(void *arg, err_t err) {
+static void tcp_server_err(void *arg, err_t err)
+{
     if (err != ERR_ABRT) {
         DEBUG_printf("tcp_client_err_fn %d\n", err);
         tcp_server_result(arg, err);
     }
 }
 
-static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
+{
+    TCPServer *state = (TCPServer*)arg;
     if (err != ERR_OK || client_pcb == NULL) {
         DEBUG_printf("Failure in accept\n");
         tcp_server_result(arg, err);
@@ -163,8 +171,9 @@ static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
     return tcp_server_send_data(arg, state->client_pcb);
 }
 
-static bool tcp_server_open(void *arg) {
-    TCP_SERVER_T *state = (TCP_SERVER_T*)arg;
+static bool tcp_server_open(void *arg)
+{
+    TCPServer *state = (TCPServer*)arg;
     DEBUG_printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), TCP_PORT);
 
     struct tcp_pcb *pcb = tcp_new_ip_type(IPADDR_TYPE_ANY);
@@ -194,8 +203,9 @@ static bool tcp_server_open(void *arg) {
     return true;
 }
 
-void run_tcp_server_test(void) {
-    TCP_SERVER_T *state = tcp_server_init();
+void run_tcp_server_test(void)
+{
+    TCPServer *state = tcp_server_init();
     if (!state) {
         return;
     }
