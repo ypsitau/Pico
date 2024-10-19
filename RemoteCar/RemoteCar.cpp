@@ -11,8 +11,23 @@
 #define I2C_SDA 8
 #define I2C_SCL 9
 
+class TokenHandlerEx : public TokenHandler {
+public:
+	virtual void DoHandle(Type type) override;
+};
+
+void TokenHandlerEx::DoHandle(Type type)
+{
+	if (type == Type::Symbol) {
+		::printf("\"%s\"\n", GetSymbol());
+	} else if (type == Type::EndOfLine) {
+		::printf("[EOL]\n");
+	}
+}
+
 int main()
 {
+	TokenHandlerEx tokenHandler;
 	stdio_init_all();
 
 	// I2C Initialisation. Using it at 400Khz.
@@ -24,20 +39,20 @@ int main()
 	gpio_pull_up(I2C_SCL);
 	// For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
-	std::unique_ptr<TCPServer> pTCPServer(new TCPServer());
+	std::unique_ptr<TCPServer> pTCPServer(new TCPServer(4242, tokenHandler));
 	if (!TCPServer::ConnectWifi(WIFI_SSID, WIFI_PASSWORD, 30000)) {
-		::printf("failed to connect: %s\n", WIFI_SSID);
+		::printf("failed to connect to: %s\n", WIFI_SSID);
 		return 1;
 	}
-	const uint16_t port = 4242;
-	::printf("Starting server at %s on port %u\n", ::ip4addr_ntoa(netif_ip4_addr(netif_list)), port);
-	if (!pTCPServer->WaitForClient(port)) {
-		pTCPServer->Complete(-1);
+	::printf("Starting server at %s on port %u\n",
+			::ip4addr_ntoa(netif_ip4_addr(netif_list)), pTCPServer->GetPort());
+	if (!pTCPServer->WaitForClient()) {
+		pTCPServer->Close();
 		return 1;
 	}
-	while (!pTCPServer->complete_) {
+	for (;;) {
 		TCPServer::PollWifi(1000);
 	}
-	TCPServer::DisconnectWifi();
+	//TCPServer::DisconnectWifi();
 	return 0;
 }

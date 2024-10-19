@@ -5,34 +5,48 @@
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
 
+class TokenHandler {
+public:
+	enum class Stat { SkipSpace, Token, };
+	enum class Type { Symbol, EndOfLine };
+	static const int BuffSize = 512;
+private:
+	Stat stat_;
+	size_t nChars_;
+	char str_[BuffSize];
+public:
+	TokenHandler() : stat_(Stat::SkipSpace), nChars_(0) {}
+	void FeedChar(char ch);
+	const char* GetSymbol() const { return str_; }
+	virtual void DoHandle(Type type) = 0;
+};
+
 class TCPServer {
 public:
-	static const int BUF_SIZE = 2048;
-	static const int TEST_ITERATIONS = 10;
+	static const int BuffSize = 2048;
 	static const int POLL_TIME_S = 5;
 public:
+	uint16_t port_;
+	TokenHandler& tokenHandler_;
 	tcp_pcb *pcbServer_;
 	tcp_pcb *pcbClient_;
-	bool complete_;
-	uint8_t buffer_sent_[BUF_SIZE];
-	uint8_t buffer_recv_[BUF_SIZE];
-	int sent_len_;
-	int recv_len_;
-	int run_count_;
+	uint8_t buffRecv_[BuffSize];
 public:
 	static bool ConnectWifi(const char* ssid, const char* password, uint32_t timeout);
 	static bool ConnectWifi();
 	static void DisconnectWifi();
 	static void PollWifi(uint32_t msec);
 public:
-	bool WaitForClient(uint16_t port);
-	bool Close();
-	err_t SendData(tcp_pcb* pcb);
-	void Complete(int status);
+	TCPServer(uint16_t port, TokenHandler& tokenHandler) : port_(port), tokenHandler_(tokenHandler) {}
+	uint16_t GetPort() const { return port_; }
+	bool WaitForClient();
+	void Close();
+	err_t SendData(const void* data, u16_t len);
+	err_t SendString(const char* str) { return SendData(str, ::strlen(str)); }
 private:
 	err_t Handler_accept(tcp_pcb* client_pcb, err_t err);
 	err_t Handler_sent(tcp_pcb* pcb, u16_t len);
-	err_t Handler_recv(tcp_pcb* pcb, pbuf* payloadBuf, err_t err);
+	err_t Handler_recv(tcp_pcb* pcb, pbuf* payloadBuff, err_t err);
 	err_t Handler_poll(tcp_pcb* pcb);
 	void Handler_err(err_t err);
 private:

@@ -46,7 +46,7 @@ pico_enable_stdio_usb(RemoteCar 0)
 
 # Add the standard library to the build
 target_link_libraries(RemoteCar
-		pico_stdlib)
+	pico_stdlib)
 
 # Add the standard include files to the build
 target_include_directories(RemoteCar PRIVATE
@@ -56,10 +56,10 @@ target_include_directories(RemoteCar PRIVATE
 
 # Add any user requested libraries
 target_link_libraries(RemoteCar 
-		hardware_i2c
-		pico_cyw43_arch_lwip_poll
-        #pico_cyw43_arch_lwip_threadsafe_background
-		)
+	hardware_i2c
+	pico_cyw43_arch_lwip_poll
+	#pico_cyw43_arch_lwip_threadsafe_background
+	)
 
 target_compile_definitions(RemoteCar PRIVATE
 	WIFI_SSID=\"${WIFI_SSID}\"
