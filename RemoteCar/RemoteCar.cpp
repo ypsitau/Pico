@@ -29,7 +29,9 @@ int main()
 		::printf("failed to connect: %s\n", WIFI_SSID);
 		return 1;
 	}
-	if (!pTCPServer->Wait(4242)) {
+	const uint16_t port = 4242;
+	::printf("Starting server at %s on port %u\n", ::ip4addr_ntoa(netif_ip4_addr(netif_list)), port);
+	if (!pTCPServer->WaitForClient(port)) {
 		pTCPServer->Complete(-1);
 		return 1;
 	}

@@ -29,25 +29,14 @@ void TCPServer::PollWifi(uint32_t msec)
 	::cyw43_arch_wait_for_work_until(::make_timeout_time_ms(msec));
 }
 
-bool TCPServer::Wait(uint16_t port)
+bool TCPServer::WaitForClient(uint16_t port)
 {
-	DEBUG_printf("Starting server at %s on port %u\n", ip4addr_ntoa(netif_ip4_addr(netif_list)), port);
 	tcp_pcb* pcbListen = ::tcp_new_ip_type(IPADDR_TYPE_ANY);
-	if (!pcbListen) {
-		DEBUG_printf("failed to create pcbListen\n");
-		return false;
-	}
-	err_t err = ::tcp_bind(pcbListen, nullptr, port);
-	if (err) {
-		DEBUG_printf("failed to bind to port %u\n", port);
-		return false;
-	}
+	if (!pcbListen) return false;
+	if (::tcp_bind(pcbListen, nullptr, port) != ERR_OK) return false;
 	pcbServer_ = ::tcp_listen_with_backlog(pcbListen, 1);
 	if (!pcbServer_) {
-		DEBUG_printf("failed to listen\n");
-		if (pcbListen) {
-			::tcp_close(pcbListen);
-		}
+		::tcp_close(pcbListen);
 		return false;
 	}
 	::tcp_arg(pcbServer_, this);

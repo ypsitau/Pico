@@ -25,7 +25,7 @@ public:
 	static void DisconnectWifi();
 	static void PollWifi(uint32_t msec);
 public:
-	bool Wait(uint16_t port);
+	bool WaitForClient(uint16_t port);
 	bool Close();
 	err_t SendData(tcp_pcb* pcb);
 	void Complete(int status);
