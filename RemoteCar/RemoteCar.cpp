@@ -23,5 +23,5 @@ int main()
 	gpio_pull_up(I2C_SCL);
 	// For more examples of I2C use see https://github.com/raspberrypi/pico-examples/tree/master/i2c
 
-	Test();
+	TCPServer::Test();
 }
