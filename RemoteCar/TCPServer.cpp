@@ -74,7 +74,7 @@ bool TCPServer::Close()
 	return rtn;
 }
 
-static err_t tcp_server_result(void *arg, int status)
+err_t tcp_server_result(void *arg, int status)
 {
 	TCPServer *pTCPServer = (TCPServer*)arg;
 	if (status == 0) {
@@ -84,22 +84,6 @@ static err_t tcp_server_result(void *arg, int status)
 	}
 	pTCPServer->complete_ = true;
 	return pTCPServer->Close();
-}
-
-static err_t tcp_server_sent(void *arg, struct tcp_pcb *tpcb, u16_t len)
-{
-	TCPServer *pTCPServer = (TCPServer*)arg;
-	DEBUG_printf("tcp_server_sent %u\n", len);
-	pTCPServer->sent_len_ += len;
-
-	if (pTCPServer->sent_len_ >= BUF_SIZE) {
-
-		// We should get the data back from the client
-		pTCPServer->recv_len_ = 0;
-		DEBUG_printf("Waiting for buffer from client\n");
-	}
-
-	return ERR_OK;
 }
 
 err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
@@ -123,63 +107,6 @@ err_t tcp_server_send_data(void *arg, struct tcp_pcb *tpcb)
 	return ERR_OK;
 }
 
-err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
-{
-	TCPServer *pTCPServer = (TCPServer*)arg;
-	if (!p) {
-		return tcp_server_result(arg, -1);
-	}
-	// this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
-	// can use this method to cause an assertion in debug mode, if this method is called when
-	// cyw43_arch_lwip_begin IS needed
-	cyw43_arch_lwip_check();
-	if (p->tot_len > 0) {
-		DEBUG_printf("tcp_server_recv %d/%d err %d\n", p->tot_len, pTCPServer->recv_len_, err);
-
-		// Receive the buffer
-		const uint16_t buffer_left = BUF_SIZE - pTCPServer->recv_len_;
-		pTCPServer->recv_len_ += pbuf_copy_partial(p, pTCPServer->buffer_recv_ + pTCPServer->recv_len_,
-											p->tot_len > buffer_left ? buffer_left : p->tot_len, 0);
-		tcp_recved(tpcb, p->tot_len);
-	}
-	pbuf_free(p);
-
-	// Have we have received the whole buffer
-	if (pTCPServer->recv_len_ == BUF_SIZE) {
-
-		// check it matches
-		if (memcmp(pTCPServer->buffer_sent_, pTCPServer->buffer_recv_, BUF_SIZE) != 0) {
-			DEBUG_printf("buffer mismatch\n");
-			return tcp_server_result(arg, -1);
-		}
-		DEBUG_printf("tcp_server_recv buffer ok\n");
-
-		// Test complete?
-		pTCPServer->run_count_++;
-		if (pTCPServer->run_count_ >= TEST_ITERATIONS) {
-			tcp_server_result(arg, 0);
-			return ERR_OK;
-		}
-
-		// Send another buffer
-		return tcp_server_send_data(arg, pTCPServer->client_pcb_);
-	}
-	return ERR_OK;
-}
-
-static err_t tcp_server_poll(void *arg, struct tcp_pcb *tpcb)
-{
-	DEBUG_printf("tcp_server_poll_fn\n");
-	return tcp_server_result(arg, -1); // no response is an error?
-}
-
-static void tcp_server_err(void *arg, err_t err)
-{
-	if (err != ERR_ABRT) {
-		DEBUG_printf("tcp_client_err_fn %d\n", err);
-		tcp_server_result(arg, err);
-	}
-}
 
 err_t TCPServer::Handler_accept(struct tcp_pcb* client_pcb, err_t err)
 {
@@ -192,12 +119,84 @@ err_t TCPServer::Handler_accept(struct tcp_pcb* client_pcb, err_t err)
 
 	client_pcb_ = client_pcb;
 	tcp_arg(client_pcb, this);
-	tcp_sent(client_pcb, tcp_server_sent);
-	tcp_recv(client_pcb, tcp_server_recv);
-	tcp_poll(client_pcb, tcp_server_poll, POLL_TIME_S * 2);
-	tcp_err(client_pcb, tcp_server_err);
+	tcp_sent(client_pcb, HandlerStub_sent);
+	tcp_recv(client_pcb, HandlerStub_recv);
+	tcp_poll(client_pcb, HandlerStub_poll, POLL_TIME_S * 2);
+	tcp_err(client_pcb, HandlerStub_err);
 
 	return tcp_server_send_data(this, client_pcb_);
+}
+
+err_t TCPServer::Handler_sent(struct tcp_pcb *tpcb, u16_t len)
+{
+	DEBUG_printf("TCPServer::Handler_sent %u\n", len);
+	sent_len_ += len;
+
+	if (sent_len_ >= BUF_SIZE) {
+
+		// We should get the data back from the client
+		recv_len_ = 0;
+		DEBUG_printf("Waiting for buffer from client\n");
+	}
+
+	return ERR_OK;
+}
+
+err_t TCPServer::Handler_recv(struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+{
+	if (!p) {
+		return tcp_server_result(this, -1);
+	}
+	// this method is callback from lwIP, so cyw43_arch_lwip_begin is not required, however you
+	// can use this method to cause an assertion in debug mode, if this method is called when
+	// cyw43_arch_lwip_begin IS needed
+	cyw43_arch_lwip_check();
+	if (p->tot_len > 0) {
+		DEBUG_printf("TCPServer::Handler_recv %d/%d err %d\n", p->tot_len, recv_len_, err);
+
+		// Receive the buffer
+		const uint16_t buffer_left = BUF_SIZE - recv_len_;
+		recv_len_ += pbuf_copy_partial(p, buffer_recv_ + recv_len_,
+											p->tot_len > buffer_left ? buffer_left : p->tot_len, 0);
+		tcp_recved(tpcb, p->tot_len);
+	}
+	pbuf_free(p);
+
+	// Have we have received the whole buffer
+	if (recv_len_ == BUF_SIZE) {
+
+		// check it matches
+		if (memcmp(buffer_sent_, buffer_recv_, BUF_SIZE) != 0) {
+			DEBUG_printf("buffer mismatch\n");
+			return tcp_server_result(this, -1);
+		}
+		DEBUG_printf("TCPServer::Handler_recv buffer ok\n");
+
+		// Test complete?
+		run_count_++;
+		if (run_count_ >= TEST_ITERATIONS) {
+			tcp_server_result(this, 0);
+			return ERR_OK;
+		}
+
+		// Send another buffer
+		return tcp_server_send_data(this, client_pcb_);
+	}
+	return ERR_OK;
+}
+
+err_t TCPServer::Handler_poll(struct tcp_pcb *tpcb)
+{
+	DEBUG_printf("tcp_server_poll_fn\n");
+	return tcp_server_result(this, -1); // no response is an error?
+}
+
+void TCPServer::Handler_err(err_t err)
+{
+	if (err != ERR_ABRT) {
+		DEBUG_printf("tcp_client_err_fn %d\n", err);
+		tcp_server_result(this, err);
+	}
 }
 
 void run_tcp_server_test(void)
