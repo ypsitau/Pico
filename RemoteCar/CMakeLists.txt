@@ -35,7 +35,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(RemoteCar RemoteCar.cpp TCPServer.cpp)
+add_executable(RemoteCar RemoteCar.cpp TCPServer.cpp SSD1306.cpp StepMotor.cpp)
 
 pico_set_program_name(RemoteCar "RemoteCar")
 pico_set_program_version(RemoteCar "0.1")
@@ -43,6 +43,8 @@ pico_set_program_version(RemoteCar "0.1")
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(RemoteCar 1)
 pico_enable_stdio_usb(RemoteCar 0)
+
+pico_generate_pio_header(RemoteCar ${CMAKE_CURRENT_LIST_DIR}/RotateOut4Bits.pio)
 
 # Add the standard library to the build
 target_link_libraries(RemoteCar
@@ -57,6 +59,7 @@ target_include_directories(RemoteCar PRIVATE
 # Add any user requested libraries
 target_link_libraries(RemoteCar 
 	hardware_i2c
+	hardware_pio
 	pico_cyw43_arch_lwip_poll
 	#pico_cyw43_arch_lwip_threadsafe_background
 	)

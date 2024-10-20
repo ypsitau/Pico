@@ -5,7 +5,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/tcp.h"
 
-class TokenHandler {
+class TCPServer;
+class EventHandler {
 public:
 	enum class Stat { SkipSpace, Token, };
 	enum class Type { Symbol, EndOfLine };
@@ -15,9 +16,10 @@ private:
 	size_t nChars_;
 	char str_[BuffSize];
 public:
-	TokenHandler() : stat_(Stat::SkipSpace), nChars_(0) {}
-	void FeedChar(char ch);
+	EventHandler() : stat_(Stat::SkipSpace), nChars_(0) {}
 	const char* GetSymbol() const { return str_; }
+	virtual void OnClientConnected(TCPServer& tcpServer, const ip_addr_t& addr) {}
+	virtual void OnCharRecv(char ch);
 	virtual void DoHandle(Type type) = 0;
 };
 
@@ -27,7 +29,7 @@ public:
 	static const int POLL_TIME_S = 5;
 public:
 	uint16_t port_;
-	TokenHandler& tokenHandler_;
+	EventHandler& eventHandler_;
 	tcp_pcb *pcbServer_;
 	tcp_pcb *pcbClient_;
 	uint8_t buffRecv_[BuffSize];
@@ -37,7 +39,7 @@ public:
 	static void DisconnectWifi();
 	static void PollWifi(uint32_t msec);
 public:
-	TCPServer(uint16_t port, TokenHandler& tokenHandler) : port_(port), tokenHandler_(tokenHandler) {}
+	TCPServer(uint16_t port, EventHandler& tokenHandler) : port_(port), eventHandler_(tokenHandler) {}
 	uint16_t GetPort() const { return port_; }
 	bool WaitForClient();
 	void Close();

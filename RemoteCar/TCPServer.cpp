@@ -10,9 +10,9 @@
 #include "TCPServer.h"
 
 //------------------------------------------------------------------------------
-// TokenHandler
+// EventHandler
 //------------------------------------------------------------------------------
-void TokenHandler::FeedChar(char ch)
+void EventHandler::OnCharRecv(char ch)
 {
 	//::printf("%c %02x\n", ch, ch);
 	switch (stat_) {
@@ -110,8 +110,8 @@ err_t TCPServer::Handler_accept(tcp_pcb* pcbClient, err_t err)
 	::tcp_recv(pcbClient_, HandlerStub_recv);
 	::tcp_poll(pcbClient_, HandlerStub_poll, POLL_TIME_S * 2);
 	::tcp_err(pcbClient_, HandlerStub_err);
-	::printf("connected %s\n", ::ip4addr_ntoa(&pcbClient_->remote_ip));
-	SendString("Ready\n");
+	eventHandler_.OnClientConnected(*this, pcbClient_->remote_ip);
+	//::printf("connected %s\n", ::ip4addr_ntoa(&pcbClient_->remote_ip));
 	return ERR_OK;
 }
 
@@ -135,7 +135,7 @@ err_t TCPServer::Handler_recv(tcp_pcb* pcb, pbuf* payloadBuff, err_t err)
 	if (len > 0) {
 		::pbuf_copy_partial(payloadBuff, buffRecv_, BuffSize, 0);
 		const uint8_t* p = buffRecv_;
-		for (u16_t i = 0; i < len; i++, p++) tokenHandler_.FeedChar(static_cast<char>(*p));
+		for (u16_t i = 0; i < len; i++, p++) eventHandler_.OnCharRecv(static_cast<char>(*p));
 		::tcp_recved(pcb, payloadBuff->tot_len);
 	}
 	::pbuf_free(payloadBuff);
