@@ -1,72 +1,3 @@
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-   set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(PICO_SDK_PATH ${USERHOME}/.pico-sdk/sdk/2.0.0)
-set(PICO_TOOLCHAIN_PATH ${USERHOME}/.pico-sdk/toolchain/13_2_Rel1)
-set(pioasm_HINT ${USERHOME}/.pico-sdk/tools/2.0.0/pioasm)
-if(EXISTS ${pioasm_HINT})
-    set(pioasm_DIR ${pioasm_HINT})
-endif()
-set(picotool_HINT ${USERHOME}/.pico-sdk/picotool/2.0.0/picotool)
-if(EXISTS ${picotool_HINT})
-    set(picotool_DIR ${picotool_HINT})
-endif()
-if(PICO_TOOLCHAIN_PATH MATCHES "RISCV")
-    set(PICO_PLATFORM rp2350-riscv CACHE STRING "Pico Platform")
-    if(PICO_TOOLCHAIN_PATH MATCHES "COREV")
-        set(PICO_COMPILER pico_riscv_gcc_zcb_zcmp)
-    endif()
-endif()
-# ====================================================================================
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-   set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(PICO_SDK_PATH ${USERHOME}/.pico-sdk/sdk/2.0.0)
-set(PICO_TOOLCHAIN_PATH ${USERHOME}/.pico-sdk/toolchain/13_2_Rel1)
-set(pioasm_HINT ${USERHOME}/.pico-sdk/tools/2.0.0/pioasm)
-if(EXISTS ${pioasm_HINT})
-    set(pioasm_DIR ${pioasm_HINT})
-endif()
-set(picotool_HINT ${USERHOME}/.pico-sdk/picotool/2.0.0/picotool)
-if(EXISTS ${picotool_HINT})
-    set(picotool_DIR ${picotool_HINT})
-endif()
-if(PICO_TOOLCHAIN_PATH MATCHES "RISCV")
-    set(PICO_PLATFORM rp2350-riscv CACHE STRING "Pico Platform")
-    if(PICO_TOOLCHAIN_PATH MATCHES "COREV")
-        set(PICO_COMPILER pico_riscv_gcc_zcb_zcmp)
-    endif()
-endif()
-# ====================================================================================
-# == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
-if(WIN32)
-   set(USERHOME $ENV{USERPROFILE})
-else()
-    set(USERHOME $ENV{HOME})
-endif()
-set(PICO_SDK_PATH ${USERHOME}/.pico-sdk/sdk/2.0.0)
-set(PICO_TOOLCHAIN_PATH ${USERHOME}/.pico-sdk/toolchain/13_2_Rel1)
-set(pioasm_HINT ${USERHOME}/.pico-sdk/tools/2.0.0/pioasm)
-if(EXISTS ${pioasm_HINT})
-    set(pioasm_DIR ${pioasm_HINT})
-endif()
-set(picotool_HINT ${USERHOME}/.pico-sdk/picotool/2.0.0/picotool)
-if(EXISTS ${picotool_HINT})
-    set(picotool_DIR ${picotool_HINT})
-endif()
-if(PICO_TOOLCHAIN_PATH MATCHES "RISCV")
-    set(PICO_PLATFORM rp2350-riscv CACHE STRING "Pico Platform")
-    if(PICO_TOOLCHAIN_PATH MATCHES "COREV")
-        set(PICO_COMPILER pico_riscv_gcc_zcb_zcmp)
-    endif()
-endif()
-# ====================================================================================
 # Generated Cmake Pico project file
 
 cmake_minimum_required(VERSION 3.13)
@@ -80,35 +11,22 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # == DO NEVER EDIT THE NEXT LINES for Raspberry Pi Pico VS Code Extension to work ==
 if(WIN32)
-   set(USERHOME $ENV{USERPROFILE})
+    set(USERHOME $ENV{USERPROFILE})
 else()
     set(USERHOME $ENV{HOME})
 endif()
-set(PICO_SDK_PATH ${USERHOME}/.pico-sdk/sdk/2.0.0)
-set(PICO_TOOLCHAIN_PATH ${USERHOME}/.pico-sdk/toolchain/13_2_Rel1)
-set(pioasm_HINT ${USERHOME}/.pico-sdk/tools/2.0.0/pioasm)
-if(EXISTS ${pioasm_HINT})
-    set(pioasm_DIR ${pioasm_HINT})
-endif()
-set(picotool_HINT ${USERHOME}/.pico-sdk/picotool/2.0.0/picotool)
-if(EXISTS ${picotool_HINT})
-    set(picotool_DIR ${picotool_HINT})
-endif()
-if(PICO_TOOLCHAIN_PATH MATCHES "RISCV")
-    set(PICO_PLATFORM rp2350-riscv CACHE STRING "Pico Platform")
-    if(PICO_TOOLCHAIN_PATH MATCHES "COREV")
-        set(PICO_COMPILER pico_riscv_gcc_zcb_zcmp)
-    endif()
+set(sdkVersion 2.0.0)
+set(toolchainVersion 13_2_Rel1)
+set(picotoolVersion 2.0.0)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
 endif()
 # ====================================================================================
-set(PICO_BOARD pico_w CACHE STRING "Board type")
+set(PICO_BOARD pico CACHE STRING "Board type")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
-
-if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
-  message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
-endif()
 
 project(Button C CXX ASM)
 
@@ -121,9 +39,6 @@ add_executable(Button Button.cpp test-Button.cpp)
 
 pico_set_program_name(Button "Button")
 pico_set_program_version(Button "0.1")
-
-# Generate PIO header
-#pico_generate_pio_header(Button ${CMAKE_CURRENT_LIST_DIR}/Button.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(Button 1)
@@ -139,9 +54,5 @@ target_include_directories(Button PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/.. # for our common lwipopts or any other standard includes, if required
 )
 
-# Add any user requested libraries
-target_link_libraries(Button 
-        hardware_pio
-        )
-
 pico_add_extra_outputs(Button)
+
