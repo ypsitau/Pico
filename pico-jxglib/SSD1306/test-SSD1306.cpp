@@ -21,7 +21,7 @@ int main()
 	oled.Clear();
 	oled.Refresh();
 	::sleep_ms(1000);
-	oled.SetFont(Font::Shinonome16::font);
+	oled.SetFont(Font::Shinonome16::fontSet);
 	oled.SetFontScale(1, 1);
 #if 1
 	for (;;) {

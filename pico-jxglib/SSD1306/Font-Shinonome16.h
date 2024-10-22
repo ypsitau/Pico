@@ -1457,7 +1457,7 @@ const SSD1306::FontEntry fontEntry_672c = { 0x672c, 16, 16, {
 	0b00010000,0b00010000,
 } };
 
-const SSD1306::Font font = { &fontEntry_Invalid, {
+const SSD1306::FontSet fontSet = { &fontEntry_Invalid, {
 	&fontEntry_0020,
 	&fontEntry_0021,
 	&fontEntry_0022,

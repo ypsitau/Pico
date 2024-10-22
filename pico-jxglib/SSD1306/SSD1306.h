@@ -19,7 +19,7 @@ public:
 		int height;
 		uint8_t data[];
 	};
-	struct Font {
+	struct FontSet {
 		const FontEntry* GetFontEntry(uint32_t code) const;
 		const FontEntry* pFontEntry_Invalid;
 		const FontEntry* pFontEntryTbl_Basic[96];
@@ -228,11 +228,11 @@ public:
 	static const uint8_t DefaultAddr = 0x3c;
 	Raw raw;
 public:
-	const Font* pFontCur_;
+	const FontSet* pFontSetCur_;
 	int fontScaleX_, fontScaleY_;
 public:
 	SSD1306(i2c_inst_t* i2c, uint8_t addr = DefaultAddr, bool highResoFlag = true) :
-			raw(i2c, addr, highResoFlag? 64 : 32), pFontCur_(nullptr), fontScaleX_(1), fontScaleY_(1) {}
+			raw(i2c, addr, highResoFlag? 64 : 32), pFontSetCur_(nullptr), fontScaleX_(1), fontScaleY_(1) {}
 public:
 	uint8_t GetAddr() const { return raw.GetAddr(); }
 	int GetWidth() const { return raw.GetWidth(); }
@@ -245,7 +245,7 @@ public:
 	void Refresh();
 	void Flash(bool flashFlag) { raw.EntireDisplayOn(static_cast<uint8_t>(flashFlag)); }
 	void Clear(uint8_t data = 0x00) { raw.FillBuffer(data); }
-	void SetFont(const Font& font) { pFontCur_ = &font, fontScaleX_ = fontScaleY_ = 1; }
+	void SetFont(const FontSet& fontSet) { pFontSetCur_ = &fontSet, fontScaleX_ = fontScaleY_ = 1; }
 	void SetFontScale(int fontScale) { fontScaleX_ = fontScaleY_ = fontScale; }
 	void SetFontScale(int fontScaleX, int fontScaleY) { fontScaleX_ = fontScaleX, fontScaleY_ = fontScaleY; }
 private:

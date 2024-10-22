@@ -86,7 +86,7 @@ main() = {
 			}
 		}
 		fout.Println()
-		fout.Printf('const SSD1306::Font font = { &fontEntry_Invalid, {\n')
+		fout.Printf('const SSD1306::FontSet fontSet = { &fontEntry_Invalid, {\n')
 		fout.Printf('\t&fontEntry_%04x,\n', 32..126)
 		fout.Print(eR'''
 		}, ${codeUTF32Tbl_Extra.len}, {
