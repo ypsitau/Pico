@@ -1,5 +1,4 @@
 #!/usr/bin/env gurax
-//==============================================================================
 import(font.bdf)
 import(tar)
 import(bzip2)
@@ -32,18 +31,47 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 // main
 //------------------------------------------------------------------------------
 main() = {
-	fontName = 'Shinonome'
+	fontName = 'Shinonome16'
 	bdfBasic = font.bdf.Context(fileContent_shnm8x16r_bdf_bz2.Reader().Reader@base64().Reader@bzip2())
 	bdfExtra = font.bdf.Context(fileContent_shnmk16_bdf_bz2.Reader().Reader@base64().Reader@bzip2())
-	codeUTF32Tbl_Extra = [0x3042, 0x3044, 0x3046, 0x3048, 0x304a]
-	Stream(Format('Font_%s.h', fontName), 'w') {|fout|
+	codeUTF32Tbl_Extra = []
+	sys.argv.Offset(1) {|arg|
+		path.Glob(arg) {|fileName|
+			sys.cerr.Printf('Scan: %s\n', fileName)
+			ReadLines(fileName) {|line|
+				line.Each():utf32 {|code|
+					if (code >= 0x100 && !codeUTF32Tbl_Extra.Contains(code)) {
+						codeUTF32Tbl_Extra.Add(code)
+					}
+				}
+			}
+		}
+	}
+	codeUTF32Tbl_Extra = codeUTF32Tbl_Extra.Sort()
+	if (codeUTF32Tbl_Extra.len > 0) {
+		sys.cerr.Printf('Extra codes: %s\n', Format('%04x', codeUTF32Tbl_Extra).Join(' '))
+	}
+	fileNameOut = Format('Font-%s.h', fontName)
+	Stream(fileNameOut, 'w') {|fout|
 		fout.Printf(eR'''
 		// %s
 		#ifndef FONT_${fontName.Upper()}
 		#define FONT_${fontName.Upper()}
 		#include "SSD1306.h"
 
-		namespace Font_${fontName} {
+		namespace Font { namespace ${fontName} {
+
+		// Invalid
+		const SSD1306::FontEntry fontEntry_Invalid = { 0x0000, 8, 16, {
+			0b01111111,0b11111111,
+			0b01000000,0b00000001,
+			0b01000000,0b00000001,
+			0b01000000,0b00000001,
+			0b01000000,0b00000001,
+			0b01000000,0b00000001,
+			0b01111111,0b11111111,
+			0b00000000,0b00000000,
+		} };
 		''', bdfBasic.XLogicalFontDescription)
 		bdfBasic.charEntryTbl.Each {|charEntry|
 			if (32 <= charEntry.codeUTF32 && charEntry.codeUTF32 <= 126) {
@@ -58,7 +86,7 @@ main() = {
 			}
 		}
 		fout.Println()
-		fout.Printf('const SSD1306::Font font = { {\n')
+		fout.Printf('const SSD1306::Font font = { &fontEntry_Invalid, {\n')
 		fout.Printf('\t&fontEntry_%04x,\n', 32..126)
 		fout.Print(eR'''
 		}, ${codeUTF32Tbl_Extra.len}, {
@@ -67,15 +95,19 @@ main() = {
 		fout.Print(R'''
 		} };
 
-		}
+		} }
 
 		#endif
 		''')
 	}
+	sys.cerr.Printf('Generated: %s\n', fileNameOut)
 }
 
 //------------------------------------------------------------------------------
-// shinonome-0.9.11/bdf/shnm8x16r.bdf
+// shnm8x16r.bdf
+// Gurax script to generate the data:
+//   $ gurax -i tar,bzip2 -c "sys.cout.Writer@base64().Writer@bzip2().PipeFrom(
+//     'shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnm8x16r.bdf')"
 //------------------------------------------------------------------------------
 fileContent_shnm8x16r_bdf_bz2 = bR'''
 QlpoOTFBWSZTWWyzfHwAM1xfgEAQUGf/9X/33/C//97gYBEe99UAAABexnguC68xt5cAdT27777w
@@ -136,6 +168,9 @@ uvPva8Iv7V3LsW89P+5ryc9ES1aO9rz9ewgLirxEm+Xzaa0LVdzWTUmoRGvu4zLFYjejBTGadnqV
 
 //------------------------------------------------------------------------------
 // shinonome-0.9.11/bdf/shnmk16.bdf
+// Gurax script to generate the data:
+//   $ gurax -i tar,bzip2 -c "sys.cout.Writer@base64().Writer@bzip2().PipeFrom(
+//     'shinonome-0.9.11p1.tar.bz2/shinonome-0.9.11/bdf/shnmk16.bdf')"
 //------------------------------------------------------------------------------
 fileContent_shnmk16_bdf_bz2 = bR'''
 QlpoOTFBWSZTWVtsuFwGCYrfgEgQUOf/9X/33/C//97gYvl+AAHknqsgyVorEbADPqjTpkaV0252

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "SSD1306.h"
-#include "Font_Shinonome.h"
+#include "Font-Shinonome16.h"
 
 void SetupStage(SSD1306& oled, int iCase)
 {
@@ -21,9 +21,7 @@ int main()
 	oled.Clear();
 	oled.Refresh();
 	::sleep_ms(1000);
-	//oled.SetFont(font5x8);
-	//oled.SetFont(fontBMSPA);
-	oled.SetFont(Font_Shinonome::font);
+	oled.SetFont(Font::Shinonome16::font);
 	oled.SetFontScale(1, 1);
 #if 1
 	for (;;) {

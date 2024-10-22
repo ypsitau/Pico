@@ -1,9 +1,9 @@
 // -Shinonome-Gothic-Medium-R-Normal--16-150-75-75-C-80-JISX0201.1976-0
-#ifndef FONT_SHINONOME
-#define FONT_SHINONOME
+#ifndef FONT_SHINONOME16
+#define FONT_SHINONOME16
 #include "SSD1306.h"
 
-namespace Font_Shinonome {
+namespace Font { namespace Shinonome16 {
 
 // Invalid
 const SSD1306::FontEntry fontEntry_Invalid = { 0x0000, 8, 16, {
@@ -1571,6 +1571,6 @@ const SSD1306::Font font = { &fontEntry_Invalid, {
 	&fontEntry_9d8f,
 } };
 
-}
+} }
 
 #endif
