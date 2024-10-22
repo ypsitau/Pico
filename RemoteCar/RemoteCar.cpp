@@ -9,8 +9,8 @@
 
 SSD1306 oled(i2c_default);
 
-StepMotor stepMotorR(0, 8, 400);
-StepMotor stepMotorL(1, 12, 400);
+StepMotor stepMotorL(0, 6, 400);
+StepMotor stepMotorR(1, 10, 400);
 
 class EventHandlerEx : public EventHandler {
 public:
@@ -23,7 +23,7 @@ void EventHandlerEx::OnClientConnected(TCPServer& tcpServer, const ip_addr_t& ad
 {
 	oled.Clear();
 	oled.DrawString(0, 0, "Client Ready");
-	oled.DrawString(0, 16, ::ip4addr_ntoa(&addr));
+	oled.DrawString(0, 32, ::ip4addr_ntoa(&addr));
 	oled.Refresh();
 	tcpServer.SendString("Ready\r\n");
 	tcpServer.SendString("Left  Right\r\n");
@@ -113,7 +113,7 @@ int main()
 	stepMotorL.Enable();
 	stepMotorR.Enable();
 	stdio_init_all();
-	i2c_init(i2c_default, 400*1000);
+	i2c_init(i2c_default, 400 * 1000);
 	::gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);
 	::gpio_set_function(PICO_DEFAULT_I2C_SCL_PIN, GPIO_FUNC_I2C);
 	::gpio_pull_up(PICO_DEFAULT_I2C_SDA_PIN);
@@ -126,14 +126,14 @@ int main()
 	do {
 		oled.Clear();
 		oled.DrawString(0, 0, "Connecting:");
-		oled.DrawString(0, 16, WIFI_SSID);
+		oled.DrawString(0, 32, WIFI_SSID);
 		oled.Refresh();
 	} while (0);
 	if (!TCPServer::ConnectWifi(WIFI_SSID, WIFI_PASSWORD, 30000)) {
 		do {
 			oled.Clear();
 			oled.DrawString(0, 0, "Failed:");
-			oled.DrawString(0, 16, WIFI_SSID);
+			oled.DrawString(0, 32, WIFI_SSID);
 			oled.Refresh();
 		} while (0);
 		return 1;
@@ -142,9 +142,9 @@ int main()
 		char str[128];
 		oled.Clear();
 		oled.DrawString(0, 0, "Connected:");
-		oled.DrawString(0, 16, ::ip4addr_ntoa(netif_ip4_addr(netif_list)));
+		oled.DrawString(0, 32, ::ip4addr_ntoa(netif_ip4_addr(netif_list)));
 		::sprintf(str, "Port %d", pTCPServer->GetPort());
-		oled.DrawString(0, 32, str);
+		oled.DrawString(0, 48, str);
 		oled.Refresh();
 	} while (0);
 	if (!pTCPServer->WaitForClient()) {
