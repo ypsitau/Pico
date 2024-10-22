@@ -24,7 +24,7 @@ int main()
 	oled.SetFont(Font::Shinonome16::fontSet);
 	oled.SetFontScale(1, 1);
 #if 1
-	for (;;) {
+	for (int i = 0; i < 2; i++) {
 		oled.Clear();
 		oled.DrawString(0, 0, "本日は晴天なり");
 		oled.DrawString(0, 32, "庭には二羽鶏がいる");
@@ -45,10 +45,10 @@ int main()
 		oled.DrawString(0, 32, "pqrstuvwxy{|}~");
 		oled.Refresh();
 		::sleep_ms(1000);
+		oled.SetFontScale(1, 2);
 	}
 #endif
-	for (;;) ;
-#if 0
+#if 1
 	// SSD1306::Flash()
 	for (int i = 0; i < 3; i++) {
 		oled.Flash(true);
@@ -57,7 +57,7 @@ int main()
 		::sleep_ms(500);
 	}
 #endif
-#if 0
+#if 1
 	// SSD1306::DrawPixel()/ErasePixel()/InvertPixel()
 	for (int iCase = 0; iCase < 3; iCase++) {
 		SetupStage(oled, iCase);
@@ -96,6 +96,7 @@ int main()
 			}
 			oled.Refresh();
 		}
+		::sleep_ms(1000);
 	}
 #endif
 #if 1
@@ -123,6 +124,7 @@ int main()
 			}
 			oled.Refresh();
 		}
+		::sleep_ms(1000);
 	}
 #endif
 #if 0
