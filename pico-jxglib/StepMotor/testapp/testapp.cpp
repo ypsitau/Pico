@@ -2,60 +2,51 @@
 #include <pico/stdlib.h>
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
-#include "jxglib/StepMotor.h"
+#include <jxglib/StepMotor.h>
 
 int main()
 {
 	stdio_init_all();
 	printf("System Frequency: %dHz\n", clock_get_hz(clk_sys));
-	//printf("System Frequency: %dHz (measured: %d000Hz)\n",
-	//		clock_get_hz(clk_sys), frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS));
 	StepMotor::Initialize(pio0);
 	StepMotor stepMotorL(0, 6, 400);
 	StepMotor stepMotorR(1, 10, 400);
 	stepMotorL.Enable();
 	stepMotorR.Enable();
-	stepMotorL.StartFullA(-1);
-	stepMotorR.StartFullA(-1);
-#if 0
-	for (int i = 0; i < 6; i++) {
-		uint gpio = 16 + i;
-		gpio_init(gpio);
-		gpio_set_dir(gpio, GPIO_IN);
-		gpio_pull_up(gpio);
-	}
+	::printf("Left Right\n");
+	::printf("[Q]  [W]    Forward\n");
+	::printf("[A]  [S]    Stop\n");
+	::printf("[Z]  [X]    Backward\n");
 	for (;;) {
-		if (!gpio_get(16)) {
+		int ch = ::fgetc(stdin);
+		if (ch == 'q') {
 			stepMotorL.Stop();
-			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 			stepMotorL.StartFullA(-1);
-			sleep_ms(500);
 		}
-		if (!gpio_get(17)) {
+		if (ch == 'z') {
 			stepMotorL.Stop();
-			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 			stepMotorL.StartFullB(-1);
-			sleep_ms(500);
 		}
-		if (!gpio_get(18)) {
+		if (ch == 'w') {
 			stepMotorR.Stop();
-			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 			stepMotorR.StartFullA(-1);
-			sleep_ms(500);
 		}
-		if (!gpio_get(19)) {
+		if (ch == 'x') {
 			stepMotorR.Stop();
-			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 			stepMotorR.StartFullB(-1);
-			sleep_ms(500);
 		}
-		if (!gpio_get(20)) {
+		if (ch == 'a') {
 			stepMotorL.Stop();
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
+		}
+		if (ch == 's') {
 			stepMotorR.Stop();
-			printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
-			sleep_ms(500);
+			::printf("current position: %d, %d\n", stepMotorL.GetPosCur(), stepMotorR.GetPosCur());
 		}
 	}
-#endif
 	return 0;
 }
