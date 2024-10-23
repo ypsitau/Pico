@@ -1,4 +1,4 @@
-#include "StepMotor.h"
+#include "jxglib/StepMotor.h"
 #include "RotateOut4Bits.pio.h"
 
 PIO StepMotor::pio_ = nullptr;
