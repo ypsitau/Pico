@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "Button.h"
+#include "jxglib/Button.h"
 
 size_t Button::nButtons_ = 0;
 Button* Button::pButtonTbl_[32];
