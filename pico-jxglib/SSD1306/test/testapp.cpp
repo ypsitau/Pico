@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "SSD1306.h"
-#include "Font-Shinonome16.h"
+#include "jxglib/SSD1306.h"
+#include "jxglib/Font-Shinonome16.h"
 
 void SetupStage(SSD1306& oled, int iCase)
 {

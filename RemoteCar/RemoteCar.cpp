@@ -2,9 +2,9 @@
 #include <memory>
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
+#include "jxglib/SSD1306.h"
+#include "jxglib/Font-Shinonome16.h"
 #include "TCPServer.h"
-#include "SSD1306.h"
-#include "Font-Shinonome16.h"
 #include "StepMotor.h"
 
 SSD1306 oled(i2c_default);

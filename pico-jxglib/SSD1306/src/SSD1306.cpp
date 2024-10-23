@@ -3,7 +3,7 @@
 // Specification: https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
 //==============================================================================
 #include <stdio.h>
-#include "SSD1306.h"
+#include "jxglib/SSD1306.h"
 
 //------------------------------------------------------------------------------
 // SSD1306
