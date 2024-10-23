@@ -28,7 +28,7 @@ set(PICO_BOARD pico_w CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-add_subdirectory("C:/Users/ypsit/source/Pico/pico-jxglib" pico-jxglib)
+add_subdirectory("../pico-jxglib" pico_jxglib)
 
 project(RemoteCar C CXX ASM)
 
@@ -37,7 +37,7 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(RemoteCar RemoteCar.cpp TCPServer.cpp SSD1306.cpp StepMotor.cpp)
+add_executable(RemoteCar RemoteCar.cpp TCPServer.cpp StepMotor.cpp)
 
 pico_set_program_name(RemoteCar "RemoteCar")
 pico_set_program_version(RemoteCar "0.1")
@@ -63,6 +63,7 @@ target_link_libraries(RemoteCar
 	hardware_i2c
 	hardware_pio
 	pico_cyw43_arch_lwip_poll
+	pico_jxglib_SSD1306
 	#pico_cyw43_arch_lwip_threadsafe_background
 	)
 

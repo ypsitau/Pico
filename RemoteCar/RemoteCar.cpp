@@ -4,7 +4,7 @@
 #include "hardware/i2c.h"
 #include "TCPServer.h"
 #include "SSD1306.h"
-#include "Font_Shinonome.h"
+#include "Font-Shinonome16.h"
 #include "StepMotor.h"
 
 SSD1306 oled(i2c_default);
@@ -121,7 +121,7 @@ int main()
 	oled.Initialize();
 	oled.Clear();
 	oled.Refresh();
-	oled.SetFont(Font_Shinonome::font);
+	oled.SetFont(Font::Shinonome16::fontSet);
 	oled.SetFontScale(1, 1);
 	do {
 		oled.Clear();
