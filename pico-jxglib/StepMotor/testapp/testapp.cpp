@@ -11,10 +11,13 @@ int main()
 	//printf("System Frequency: %dHz (measured: %d000Hz)\n",
 	//		clock_get_hz(clk_sys), frequency_count_khz(CLOCKS_FC0_SRC_VALUE_CLK_SYS));
 	StepMotor::Initialize(pio0);
-	StepMotor stepMotorL(0, 8, 400);
-	StepMotor stepMotorR(1, 12, 400);
+	StepMotor stepMotorL(0, 6, 400);
+	StepMotor stepMotorR(1, 10, 400);
 	stepMotorL.Enable();
 	stepMotorR.Enable();
+	stepMotorL.StartFullA(-1);
+	stepMotorR.StartFullA(-1);
+#if 0
 	for (int i = 0; i < 6; i++) {
 		uint gpio = 16 + i;
 		gpio_init(gpio);
@@ -53,5 +56,6 @@ int main()
 			sleep_ms(500);
 		}
 	}
+#endif
 	return 0;
 }
