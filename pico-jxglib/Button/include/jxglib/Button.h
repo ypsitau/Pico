@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <pico/stdlib.h>
 #include <memory>
-#include "FIFOBuff.h"
+#include "jxglib/FIFOBuff.h"
 
 class Button {
 public:

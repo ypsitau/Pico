@@ -1,5 +1,7 @@
 add_library(pico_jxglib_Button INTERFACE)
 
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../Common pico_jxglib_Common)
+
 target_include_directories(pico_jxglib_Button INTERFACE
 	${CMAKE_CURRENT_LIST_DIR}/include)
 
