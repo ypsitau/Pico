@@ -4,8 +4,8 @@
 #include "hardware/i2c.h"
 #include "jxglib/SSD1306.h"
 #include "jxglib/Font-Shinonome16.h"
+#include "jxglib/StepMotor.h"
 #include "TCPServer.h"
-#include "StepMotor.h"
 
 SSD1306 oled(i2c_default);
 
@@ -125,7 +125,7 @@ int main()
 	oled.SetFontScale(1, 1);
 	do {
 		oled.Clear();
-		oled.DrawString(0, 0, "Connecting:");
+		oled.DrawString(0, 0, "ConnectingA:");
 		oled.DrawString(0, 32, WIFI_SSID);
 		oled.Refresh();
 	} while (0);

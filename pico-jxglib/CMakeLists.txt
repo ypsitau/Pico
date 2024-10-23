@@ -4,4 +4,4 @@ project(pico_jxglib C CXX ASM)
 
 #add_subdirectory(Button)
 add_subdirectory(SSD1306)
-#add_subdirectory(StepMotor)
+add_subdirectory(StepMotor)
