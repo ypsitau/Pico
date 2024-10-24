@@ -1,7 +1,6 @@
 // -Shinonome-Gothic-Medium-R-Normal--16-150-75-75-C-80-JISX0201.1976-0
 #ifndef FONT_SHINONOME16
 #define FONT_SHINONOME16
-#include "SSD1306.h"
 
 namespace Font { namespace NS_Shinonome16 {
 
