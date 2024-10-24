@@ -208,7 +208,7 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, const FontEntry* pFo
 
 template<class Logic> void SSD1306::DrawCharT(int x, int y, uint32_t code)
 {
-	const FontEntry* pFontEntry = pFontSetCur_->GetFontEntry(code);
+	const FontEntry* pFontEntry = pFontCur_->GetFontEntry(code);
 	DrawCharT<Logic>(x, y, pFontEntry);
 }
 
@@ -218,7 +218,7 @@ template<class Logic> void SSD1306::DrawStringT(int x, int y, const char* str)
 	UTF8Decoder decoder;
 	for (const char* p = str; *p; p++) {
 		if (decoder.FeedChar(*p, &code)) {
-			const FontEntry* pFontEntry = pFontSetCur_->GetFontEntry(code);
+			const FontEntry* pFontEntry = pFontCur_->GetFontEntry(code);
 			DrawCharT<Logic>(x, y, pFontEntry);
 			x += pFontEntry->width * fontScaleX_;
 		}
@@ -359,7 +359,7 @@ bool SSD1306::AdjustCoord(int* pV, int* pDist, int vLimit)
 //------------------------------------------------------------------------------
 // SSD1306::Font
 //------------------------------------------------------------------------------
-const SSD1306::FontEntry* SSD1306::FontSet::GetFontEntry(uint32_t code) const
+const SSD1306::FontEntry* SSD1306::Font::GetFontEntry(uint32_t code) const
 {
 	if (code < 32) return pFontEntry_Invalid;
 	if (code <= 126) return pFontEntryTbl_Basic[code - 32];

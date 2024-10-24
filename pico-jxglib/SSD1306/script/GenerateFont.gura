@@ -59,7 +59,7 @@ main() = {
 		#define FONT_${fontName.Upper()}
 		#include "SSD1306.h"
 
-		namespace Font { namespace ${fontName} {
+		namespace Font { namespace NS_${fontName} {
 
 		// Invalid
 		const SSD1306::FontEntry fontEntry_Invalid = { 0x0000, 8, 16, {
@@ -86,16 +86,18 @@ main() = {
 			}
 		}
 		fout.Println()
-		fout.Printf('const SSD1306::FontSet fontSet = { &fontEntry_Invalid, {\n')
-		fout.Printf('\t&fontEntry_%04x,\n', 32..126)
+		fout.Println('}')
+		fout.Println()
+		fout.Printf('const SSD1306::Font %s = { &NS_%s::fontEntry_Invalid, {\n', fontName, fontName)
+		fout.Printf('\t&NS_%s::fontEntry_%04x,\n', fontName, 32..126)
 		fout.Print(eR'''
 		}, ${codeUTF32Tbl_Extra.len}, {
 		''')
-		fout.Printf('\t&fontEntry_%04x,\n', codeUTF32Tbl_Extra)
+		fout.Printf('\t&NS_%s::fontEntry_%04x,\n', fontName, codeUTF32Tbl_Extra)
 		fout.Print(R'''
 		} };
 
-		} }
+		}
 
 		#endif
 		''')
