@@ -16,13 +16,16 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 	fontEntryName = Format('fontEntry_%04x', codeUTF32)
 	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, %d, %d, {\n',
 						fontEntryName, codeUTF32, this.BBX.w, this.BBX.h)
-	bytesPerLine = Int((this.BBX.h + 7) / 8)
-	this.ScanBitmapVert().Each {|data|
-		if (bytesPerLine == 1) {
-			fout.Printf('\t0b%08b,\n', data)
-		} else {
-			fout.Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
-		}
+	//bytesPerLine = Int((this.BBX.w + 7) / 8)
+	//this.ScanBitmapVert().Each {|data|
+	//	if (bytesPerLine == 1) {
+	//		fout.Printf('\t0b%08b,\n', data)
+	//	} else {
+	//		fout.Printf('\t0b%08b,0b%08b,\n', (data >> 8) & 0xff, data & 0xff)
+	//	}
+	//}
+	this.BITMAP.Each {|data|
+		fout.Printf('\t0b%s,\n', Format('%0*b', this.bytesPerLine * 8, data).Fold(8).Join(',0b'))
 	}
 	fout.Printf('} };\n')
 }
@@ -62,14 +65,22 @@ main() = {
 
 		// Invalid
 		const SSD1306::FontEntry fontEntry_Invalid = { 0x0000, 8, 16, {
-			0b01111111,0b11111111,
-			0b01000000,0b00000001,
-			0b01000000,0b00000001,
-			0b01000000,0b00000001,
-			0b01000000,0b00000001,
-			0b01000000,0b00000001,
-			0b01111111,0b11111111,
-			0b00000000,0b00000000,
+			0b11111110,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b10000010,
+			0b11111110,
+			0b00000000,
 		} };
 		''', bdfBasic.XLogicalFontDescription)
 		bdfBasic.charEntryTbl.Each {|charEntry|

@@ -18,11 +18,15 @@ int main()
 	::gpio_pull_up(PICO_DEFAULT_I2C_SCL_PIN);
 	SSD1306 oled(i2c_default);
 	oled.Initialize();
-	oled.Clear();
-	oled.Refresh();
-	::sleep_ms(1000);
+	//oled.Clear();
+	//oled.Refresh();
+	//::sleep_ms(1000);
 	oled.SetFont(Font::Shinonome16);
 	oled.SetFontScale(1, 1);
+	oled.Clear();
+	oled.DrawString(0, 0, "ABC");
+	oled.Refresh();
+#if 0
 #if 1
 	for (int i = 0; i < 2; i++) {
 		oled.Clear();
@@ -141,6 +145,7 @@ int main()
 		oled.Refresh();
 		::sleep_ms(100);
 	}
+#endif
 #endif
 	for (;;) ;
 }
