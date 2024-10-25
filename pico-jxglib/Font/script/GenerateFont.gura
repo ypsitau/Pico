@@ -58,6 +58,7 @@ main() = {
 		'shinonome16' => (fileContent_shnm8x16r_bdf_bz2, fileContent_shnmk16_bdf_bz2, 8, 16)
 	}
 	argopt.Parser {|p|
+		p.OptString('outdir', 'o', 'directory to output')
 		p.OptString('code', 'c', 'code to generate')
 		p.OptBool('help', 'h', 'prints this help')
 		opt = nil
@@ -72,6 +73,7 @@ main() = {
 		sys.cerr.Printf('available fonts: %s\n', dict.EachKey().Sort().Join(', '))
 		sys.Exit(1)
 	}
+	dirNameOut = opt.Get('outdir') || '.'
 	fontName = argv[0]
 	try {
 		[fileContentBasic, fileContentExtra, wdInvalid, htInvalid] = dict[fontName]
@@ -99,7 +101,7 @@ main() = {
 	if (codeUTF32Tbl_Extra.len > 0) {
 		sys.cerr.Printf('Extra codes: %s\n', Format('%04x', codeUTF32Tbl_Extra).Join(' '))
 	}
-	fileNameOut = Format('%s.h', fontName)
+	fileNameOut = path.Join(dirNameOut, Format('%s.h', fontName))
 	Stream(fileNameOut, 'w') {|fout|
 		fout.Print(eR'''
 		// ${bdfBasic.XLogicalFontDescription}
