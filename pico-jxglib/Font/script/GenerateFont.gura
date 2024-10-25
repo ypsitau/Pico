@@ -44,15 +44,20 @@ GenerateCCode_Invalid(fout as Stream, width as Number, height as Number) = {
 }
 
 //------------------------------------------------------------------------------
+// dictFileContent
+//------------------------------------------------------------------------------
+dictFileContent = nil
+
+//------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 tmplHelp = tR'''
-usage: GenerateFont [options] <font_name> [<text_file> ..]
+usage: GenerateFont [options] <font_name>[,<font_name>...] [<text_file> ..]
 options:
   ${p.FormatHelp() + '\n'}
 '''
 main() = {
-	dict = %{
+	dictFileContent:extern = %{
 		'shinonome12' => (fileContent_shnm6x12r_bdf_bz2, fileContent_shnmk12_bdf_bz2, 6, 12)
 		'shinonome14' => (fileContent_shnm7x14r_bdf_bz2, fileContent_shnmk14_bdf_bz2, 7, 14)
 		'shinonome16' => (fileContent_shnm8x16r_bdf_bz2, fileContent_shnmk16_bdf_bz2, 8, 16)
@@ -70,24 +75,14 @@ main() = {
 	}
 	if (argv.len < 1) {
 		sys.cerr.Println('specify a font name to generate')
-		sys.cerr.Printf('available fonts: %s\n', dict.EachKey().Sort().Join(', '))
+		sys.cerr.Printf('available fonts: %s\n', dictFileContent.EachKey().Sort().Join(', '))
 		sys.Exit(1)
 	}
 	dirNameOut = opt.Get('outdir') || '.'
-	fontName = argv[0]
-	try {
-		[fileContentBasic, fileContentExtra, wdInvalid, htInvalid] = dict[fontName]
-	} catch {
-		sys.cerr.Printf('unknown font: %s\n', fontName)
-		sys.cerr.Printf('available fonts: %s\n', dict.EachKey().Sort().Join(', '))
-		sys.Exit(1)
-	}
-	bdfBasic = font.bdf.Context(fileContentBasic.Reader().Reader@base64().Reader@bzip2())
-	bdfExtra = font.bdf.Context(fileContentExtra.Reader().Reader@base64().Reader@bzip2())
 	codeUTF32Tbl_Extra = []
 	argv.Offset(1) {|arg|
 		path.Glob(arg) {|fileName|
-			sys.cerr.Printf('Scan: %s\n', fileName)
+			sys.cerr.Printf('Scanning: %s\n', fileName)
 			ReadLines(fileName) {|line|
 				line.Each():utf32 {|code|
 					if (code >= 0x100 && !codeUTF32Tbl_Extra.Contains(code)) {
@@ -101,6 +96,21 @@ main() = {
 	if (codeUTF32Tbl_Extra.len > 0) {
 		sys.cerr.Printf('Extra codes: %s\n', Format('%04x', codeUTF32Tbl_Extra).Join(' '))
 	}
+	argv[0].Split(',') {|fontName|
+		GenerateFont(fontName, dirNameOut, codeUTF32Tbl_Extra)
+	}
+}
+
+GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as Number) = {
+	try {
+		[fileContentBasic, fileContentExtra, wdInvalid, htInvalid] = dictFileContent[fontName]
+	} catch {
+		sys.cerr.Printf('unknown font: %s\n', fontName)
+		sys.cerr.Printf('available fonts: %s\n', dictFileContent.EachKey().Sort().Join(', '))
+		sys.Exit(1)
+	}
+	bdfBasic = font.bdf.Context(fileContentBasic.Reader().Reader@base64().Reader@bzip2())
+	bdfExtra = font.bdf.Context(fileContentExtra.Reader().Reader@base64().Reader@bzip2())
 	fileNameOut = path.Join(dirNameOut, Format('%s.h', fontName))
 	Stream(fileNameOut, 'w') {|fout|
 		fout.Print(eR'''
