@@ -54,10 +54,10 @@ main() = {
 	if (codeUTF32Tbl_Extra.len > 0) {
 		sys.cerr.Printf('Extra codes: %s\n', Format('%04x', codeUTF32Tbl_Extra).Join(' '))
 	}
-	fileNameOut = Format('Font-%s.h', fontName)
+	fileNameOut = Format('%s.h', fontName)
 	Stream(fileNameOut, 'w') {|fout|
-		fout.Printf(eR'''
-		// %s
+		fout.Print(eR'''
+		// ${bdfBasic.XLogicalFontDescription}
 		#ifndef FONT_${fontName.Upper()}
 		#define FONT_${fontName.Upper()}
 
@@ -82,7 +82,7 @@ main() = {
 			0b11111110,
 			0b00000000,
 		} };
-		''', bdfBasic.XLogicalFontDescription)
+		''')
 		bdfBasic.charEntryTbl.Each {|charEntry|
 			if (32 <= charEntry.codeUTF32 && charEntry.codeUTF32 <= 126) {
 				fout.Println()
