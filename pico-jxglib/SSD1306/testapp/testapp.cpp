@@ -22,9 +22,9 @@ int main()
 	//oled.Refresh();
 	//::sleep_ms(1000);
 	oled.SetFont(Font::Shinonome16);
-	oled.SetFontScale(1, 1);
+	oled.SetFontScale(1, 4);
 	oled.Clear();
-	oled.DrawString(0, 0, "ABC");
+	oled.DrawString(0, 0, "本日は晴天なり");
 	oled.Refresh();
 #if 0
 #if 1

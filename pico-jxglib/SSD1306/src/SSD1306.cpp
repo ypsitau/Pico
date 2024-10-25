@@ -169,38 +169,33 @@ template<class Logic> void SSD1306::DrawCharT(int x, int y, const FontEntry* pFo
 	if (!pFontEntry) return;
 	int wdFont = pFontEntry->width;
 	int htFont = pFontEntry->height;
-	int bytesPerLine = (htFont + 7) / 8;
+	int bytesPerLine = (wdFont + 7) / 8;
 	int width = wdFont * fontScaleX_;
 	int height = htFont * fontScaleY_;
 	if (!AdjustCoord(&x, &width, GetWidth()) || !AdjustCoord(&y, &height, GetHeight())) return;
-	const uint8_t* pData = pFontEntry->data;
+	const uint8_t* pDataBottom = pFontEntry->data + bytesPerLine * htFont;
 	int pageTop;
 	uint8_t* pTop = raw.GetPointer(x, y, &pageTop);
 	int bitOffset = y - pageTop * 8;
 	int xCur = x;
-	for (int i = 0; i < wdFont; i++, pTop += fontScaleX_, xCur += fontScaleX_) {
-		uint32_t bits = 0;
-		if (fontScaleY_ == 1) {
-			for (int j = 0; j < bytesPerLine; j++, pData++) {
-				bits = (bits << 8) + *pData;
+	uint32_t bitsDot = (1 << fontScaleY_) - 1;
+	for (int i = 0; i < bytesPerLine; i++, pDataBottom++) {
+		for (uint8_t bitMask = 0x80; bitMask; bitMask >>= 1, pTop += fontScaleX_, xCur += fontScaleX_) {
+			uint64_t bits = 0;
+			const uint8_t* pData = pDataBottom;
+			for (int j = 0; j < htFont; j++) {
+				pData -= bytesPerLine;
+				bits = (bits << fontScaleY_) | ((*pData & bitMask)? bitsDot : 0);
 			}
-		} else {
-			for (int j = 0; j < bytesPerLine; j++, pData++) {
-				uint8_t data = *pData;
-				for (int k = 0; k < 8; k++, data <<= 1) {
-					uint8_t bit = (data & 0x80)? 1 : 0;
-					for (int s = 0; s < fontScaleY_; s++) bits = (bits << 1) + bit;
+			bits <<= bitOffset;
+			uint8_t* pLeft = pTop;
+			for (int page = pageTop; page < GetNumPages() && bits; page++, pLeft += GetWidth(), bits >>= 8) {
+				uint8_t* p = pLeft;
+				uint8_t data = static_cast<uint8_t>(bits & 0b11111111);
+				for (int j = 0; j < fontScaleX_ && xCur + j < GetWidth(); j++, p++) {
+					assert(raw.EnsureSafePointer(p));
+					*p = Logic()(*p, data);
 				}
-			}
-		}
-		bits <<= bitOffset;
-		uint8_t* pLeft = pTop;
-		for (int page = pageTop; page < GetNumPages() && bits; page++, pLeft += GetWidth(), bits >>= 8) {
-			uint8_t* p = pLeft;
-			uint8_t data = static_cast<uint8_t>(bits & 0b11111111);
-			for (int j = 0; j < fontScaleX_ && xCur + j < GetWidth(); j++, p++) {
-				assert(raw.EnsureSafePointer(p));
-				*p = Logic()(*p, data);
 			}
 		}
 	}
