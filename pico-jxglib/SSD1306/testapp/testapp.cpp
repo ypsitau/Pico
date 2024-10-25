@@ -5,6 +5,7 @@
 #include "Font/shinonome12.h"
 #include "Font/shinonome14.h"
 #include "Font/shinonome16.h"
+#include "jxglib/Font/shinonome18.h"
 
 void SetupStage(SSD1306& oled, int iCase)
 {
@@ -27,12 +28,13 @@ int main()
 	//::sleep_ms(1000);
 	oled.SetFontScale(1, 1);
 	oled.Clear();
+	const char* str = "ABCDEFG";
 	oled.SetFont(Font::shinonome12);
-	oled.DrawString(0, 0, "本日は晴天なり");
+	oled.DrawString(0, 0, str);
 	oled.SetFont(Font::shinonome14);
-	oled.DrawString(0, 16, "本日は晴天なり");
-	oled.SetFont(Font::shinonome16);
-	oled.DrawString(0, 32, "本日は晴天なり");
+	oled.DrawString(0, 16, str);
+	oled.SetFont(Font::shinonome18);
+	oled.DrawString(0, 32, str);
 	oled.Refresh();
 #if 0
 #if 1
