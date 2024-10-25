@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <jxglib/SSD1306.h>
-#include "jxglib/Font/Shinonome16.h"
+#include "jxglib/Font/shinonome12.h"
+#include "jxglib/Font/shinonome14.h"
+#include "jxglib/Font/shinonome16.h"
 
 void SetupStage(SSD1306& oled, int iCase)
 {
@@ -21,10 +23,14 @@ int main()
 	//oled.Clear();
 	//oled.Refresh();
 	//::sleep_ms(1000);
-	oled.SetFont(Font::Shinonome16);
-	oled.SetFontScale(1, 4);
+	oled.SetFontScale(1, 1);
 	oled.Clear();
-	oled.DrawString(0, 0, "本日は晴天なり");
+	oled.SetFont(Font::shinonome12);
+	oled.DrawString(0, 0, "ABCDEFG");
+	oled.SetFont(Font::shinonome14);
+	oled.DrawString(0, 16, "ABCDEFG");
+	oled.SetFont(Font::shinonome16);
+	oled.DrawString(0, 32, "ABCDEFG");
 	oled.Refresh();
 #if 0
 #if 1
