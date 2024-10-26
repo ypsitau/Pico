@@ -1,8 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
-#include "FIFOBuff.h"
-#include "Rect.h"
-#include "Point.h"
 #include "Color.h"
-
+#include "FIFOBuff.h"
+#include "Point.h"
+#include "Rect.h"
+#include "UTF8Decoder.h"
 #endif

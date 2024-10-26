@@ -252,47 +252,61 @@ private:
 	template<class Logic> void DrawCharT(int x, int y, uint32_t code);
 	template<class Logic> void DrawStringT(int x, int y, const char* str);
 public:
+	// Draw* Method
 	void DrawPixel(int x, int y) { DrawPixelT<Logic_Draw>(x, y); }
+	void DrawPixel(const Point& pt) { DrawPixel(pt.x, pt.y); }
 	void DrawHLine(int x, int y, int width);
+	void DrawHLine(const Point& pt, int width) { DrawHLine(pt.x, pt.y, width); }
 	void DrawVLine(int x, int y, int height);
+	void DrawVLine(const Point& pt, int height) { DrawVLine(pt.x, pt.y, height); }
 	void DrawLine(int x0, int y0, int x1, int y1);
+	void DrawLine(const Point& pt1, const Point& pt2) { DrawLine(pt1.x, pt1.y, pt2.x, pt2.y); }
 	void DrawRect(int x, int y, int width, int height);
+	void DrawRect(const Rect& rc) { DrawRect(rc.x, rc.y, rc.width, rc.height); }
 	void DrawRectFill(int x, int y, int width, int height);
+	void DrawRectFill(const Rect& rc) { DrawRect(rc.x, rc.y, rc.width, rc.height); }
 	void DrawChar(int x, int y, uint32_t code);
+	void DrawChar(const Point& pt, uint32_t code) { DrawChar(pt.x, pt.y, code); }
 	void DrawString(int x, int y, const char* str);
+	void DrawString(const Point& pt, const char* str) { DrawString(pt.x, pt.y, str); }
+	// Erase* Method
 	void ErasePixel(int x, int y) { DrawPixelT<Logic_Erase>(x, y); }
+	void ErasePixel(const Point& pt) { ErasePixel(pt.x, pt.y); }
 	void EraseHLine(int x, int y, int width);
+	void EraseHLine(const Point& pt, int width) { EraseHLine(pt.x, pt.y, width); }
 	void EraseVLine(int x, int y, int height);
+	void EraseVLine(const Point& pt, int height) { EraseVLine(pt.x, pt.y, height); }
 	void EraseLine(int x0, int y0, int x1, int y1);
+	void EraseLine(const Point& pt1, const Point& pt2) { EraseLine(pt1.x, pt1.y, pt2.x, pt2.y); }
 	void EraseRect(int x, int y, int width, int height);
+	void EraseRect(const Rect& rc) { EraseRect(rc.x, rc.y, rc.width, rc.height); }
 	void EraseRectFill(int x, int y, int width, int height);
+	void EraseRectFill(const Rect& rc) { EraseRect(rc.x, rc.y, rc.width, rc.height); }
 	void EraseChar(int x, int y, uint32_t code);
+	void EraseChar(const Point& pt, uint32_t code) { EraseChar(pt.x, pt.y, code); }
 	void EraseString(int x, int y, const char* str);
+	void EraseString(const Point& pt, const char* str) { EraseString(pt.x, pt.y, str); }
+	// Invert* Method
 	void InvertPixel(int x, int y) { DrawPixelT<Logic_Invert>(x, y); }
+	void InvertPixel(const Point& pt) { InvertPixel(pt.x, pt.y); }
 	void InvertHLine(int x, int y, int width);
+	void InvertHLine(const Point& pt, int width) { InvertHLine(pt.x, pt.y, width); }
 	void InvertVLine(int x, int y, int height);
+	void InvertVLine(const Point& pt, int height) { InvertVLine(pt.x, pt.y, height); }
 	void InvertLine(int x0, int y0, int x1, int y1);
+	void InvertLine(const Point& pt1, const Point& pt2) { InvertLine(pt1.x, pt1.y, pt2.x, pt2.y); }
 	void InvertRect(int x, int y, int width, int height);
+	void InvertRect(const Rect& rc) { InvertRect(rc.x, rc.y, rc.width, rc.height); }
 	void InvertRectFill(int x, int y, int width, int height);
+	void InvertRectFill(const Rect& rc) { InvertRect(rc.x, rc.y, rc.width, rc.height); }
 	void InvertChar(int x, int y, uint32_t code);
+	void InvertChar(const Point& pt, uint32_t code) { InvertChar(pt.x, pt.y, code); }
 	void InvertString(int x, int y, const char* str);
-public:
+	void InvertString(const Point& pt, const char* str) { InvertString(pt.x, pt.y, str); }
 private:
 	static void SortPair(int v1, int v2, int* pMin, int* pMax);
 	static bool CheckCoord(int v, int vLimit) { return 0 <= v && v < vLimit; }
 	static bool AdjustCoord(int* pV, int* pDist, int vLimit);
-};
-
-//------------------------------------------------------------------------------
-// UTF8Decoder
-//------------------------------------------------------------------------------
-class UTF8Decoder {
-private:
-	int nFollowers_;
-	uint32_t codeUTF32_;
-public:
-	UTF8Decoder() : nFollowers_(0), codeUTF32_(0) {}
-	bool FeedChar(char ch, uint32_t* pCodeUTF32);
 };
 
 #endif
