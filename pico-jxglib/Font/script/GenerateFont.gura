@@ -14,7 +14,7 @@ Formatter_Hex = class {
 	nCols_ as Number
 	__init__(nCols as Number) = { this.nCols_ = nCols }
 	Begin(fout as Stream) = { this.iCol_ = 0 }
-	End(fout as Stream) = { fout.Print('\n') }
+	End(fout as Stream) = { (this.iCol_ > 0) && fout.Print('\n') }
 	PutData(fout as Stream, nBits as Number, data as Number):void:map = {
 		buff = []
 		while (nBits > 0) {
@@ -23,7 +23,7 @@ Formatter_Hex = class {
 			nBits -= 8
 		}
 		buff.Reverse {|num|
-			if (this.iCol_ == this.nCols_) { fout.Printf('\n\t'), this.iCol_ = 0 }
+			if (this.iCol_ == this.nCols_) { fout.Printf('\n'), this.iCol_ = 0 }
 			fout.Printf('0x%02x,', num)
 			this.iCol_ += 1
 		}
@@ -38,7 +38,7 @@ Formatter_Binary = class {
 	}
 }
 
-font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
+font.bdf.CharEntry.GenerateCCode(fout as Stream, bdf as font.bdf.Context) = {
 	codeUTF32 = this.codeUTF32
 	if (32 <= codeUTF32 && codeUTF32 < 127) {
 		fout.Printf("// '%c'\n", codeUTF32)
@@ -46,24 +46,32 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 		fout.Printf("// 0x%04x\n", codeUTF32)
 	}
 	fontEntryName = Format('f_%04x', codeUTF32)
-	fout.Printf('const FontEntry %s = { 0x%04x, %d, %d, {\n',
-						fontEntryName, codeUTF32, this.BBX.w, this.BBX.h)
+	xOffset = this.BBX.ox
+	htFontBBox = bdf.FONTBOUNDINGBOX.h
+	fout.Printf('const FontEntry %s = { 0x%04x, %d, %d, %d, {\n',
+						fontEntryName, codeUTF32, xOffset + this.BBX.w, htFontBBox, this.DWIDTH[0])
 	nBits = this.bytesPerLine * 8
+	htLower = Max(this.BBX.oy + 1, 0)
+	htUpper = Max(htFontBBox - this.BITMAP.len - htLower, 0)
 	formatter.Begin(fout)
-	formatter.PutData(fout, nBits, this.BITMAP)
+	repeat (htUpper) { formatter.PutData(fout, nBits, 0) }
+	formatter.PutData(fout, nBits, this.BITMAP >> xOffset)
+	repeat (htLower) { formatter.PutData(fout, nBits, 0) }
 	formatter.End(fout)
 	fout.Printf('} };\n')
 }
 
-GenerateCCode_Invalid(fout as Stream, width as Number, height as Number) = {
-	fout.Printf('const FontEntry f_Invalid = { 0x0000, %d, %d, {\n', width, height)
-	bytesPerLine = Int((width + 7) / 8)
+GenerateCCode_Invalid(fout as Stream, bdf as font.bdf.Context) = {
+	wdFontBBox = bdf.FONTBOUNDINGBOX.w
+	htFontBBox = bdf.FONTBOUNDINGBOX.h
+	fout.Printf('const FontEntry f_Invalid = { 0x0000, %d, %d, %d, {\n', wdFontBBox, htFontBBox, wdFontBBox)
+	bytesPerLine = Int((wdFontBBox + 7) / 8)
 	nBits = bytesPerLine * 8
-	dataTop = dataBottom = ((1 << (width - 1)) - 1) << (nBits - width + 1)
-	dataMid = (1 << (nBits - 1)) | (1 << (nBits - width + 1))
+	dataTop = dataBottom = ((1 << (wdFontBBox - 1)) - 1) << (nBits - wdFontBBox + 1)
+	dataMid = (1 << (nBits - 1)) | (1 << (nBits - wdFontBBox + 1))
 	formatter.Begin(fout)
 	formatter.PutData(fout, nBits, dataTop)
-	repeat (height - 3) { formatter.PutData(fout, nBits, dataMid) }
+	repeat (htFontBBox - 3) { formatter.PutData(fout, nBits, dataMid) }
 	formatter.PutData(fout, nBits, dataBottom)
 	formatter.PutData(fout, nBits, 0)
 	formatter.End(fout)
@@ -71,9 +79,9 @@ GenerateCCode_Invalid(fout as Stream, width as Number, height as Number) = {
 }
 
 //------------------------------------------------------------------------------
-// dictFileContent
+// dictEmbeddedFileContent
 //------------------------------------------------------------------------------
-dictFileContent = nil
+dictEmbeddedFileContent = nil
 
 //------------------------------------------------------------------------------
 // main
@@ -84,17 +92,16 @@ options:
   ${p.FormatHelp() + '\n'}
 '''
 main() = {
-	//formatter:extern = Formatter_Binary()
-	formatter:extern = Formatter_Hex(64)
-	dictFileContent:extern = %{
-		'shinonome12' => (fileContent_shnm6x12r_bdf_bz2, fileContent_shnmk12_bdf_bz2, 6, 12)
-		'shinonome14' => (fileContent_shnm7x14r_bdf_bz2, fileContent_shnmk14_bdf_bz2, 7, 14)
-		'shinonome16' => (fileContent_shnm8x16r_bdf_bz2, fileContent_shnmk16_bdf_bz2, 8, 16)
+	dictEmbeddedFileContent:extern = %{
+		'shinonome12' => (fileContent_shnm6x12r_bdf_bz2, fileContent_shnmk12_bdf_bz2)
+		'shinonome14' => (fileContent_shnm7x14r_bdf_bz2, fileContent_shnmk14_bdf_bz2)
+		'shinonome16' => (fileContent_shnm8x16r_bdf_bz2, fileContent_shnmk16_bdf_bz2)
 		'shinonome18' => (fileContent_shnm9x18r_bdf_bz2, nil, 9, 18)
 	}
 	argopt.Parser {|p|
 		p.OptString('outdir', 'o', 'directory to output')
-		p.OptString('code', 'c', 'code to generate')
+		p.OptString('cols', 'c', 'number of columns')
+		p.OptBool('readable', 'r', 'output font data in a readable format')
 		p.OptBool('help', 'h', 'prints this help')
 		opt = nil
 		try {[argv, opt] = p.Parse(sys.argv)} catch {|e| sys.cerr.Println(e.text)}
@@ -103,12 +110,19 @@ main() = {
 			sys.Exit(1)
 		}
 	}
-	if (argv.len < 1) {
-		sys.cerr.Println('specify a font name to generate')
-		sys.cerr.Printf('available fonts: %s\n', dictFileContent.EachKey().Sort().Join(', '))
+	try {
+		nCols = Int(opt['cols'] || '64')
+	} catch {
+		sys.cerr.Println('cols should take a number')
 		sys.Exit(1)
 	}
-	dirNameOut = opt.Get('outdir') || '.'
+	formatter:extern = cond(opt['readable'], Formatter_Binary(), Formatter_Hex(nCols))
+	if (argv.len < 1) {
+		sys.cerr.Println('specify a font name to generate')
+		sys.cerr.Printf('available fonts: %s\n', dictEmbeddedFileContent.EachKey().Sort().Join(', '))
+		sys.Exit(1)
+	}
+	dirNameOut = opt['outdir'] || '.'
 	codeUTF32Tbl_Extra = []
 	argv.Offset(1) {|arg|
 		path.Glob(arg) {|fileName|
@@ -124,7 +138,7 @@ main() = {
 	}
 	codeUTF32Tbl_Extra = codeUTF32Tbl_Extra.Sort()
 	if (codeUTF32Tbl_Extra.len > 0) {
-		sys.cerr.Printf('Extra codes: %s\n', Format('%04x', codeUTF32Tbl_Extra).Join(' '))
+		sys.cerr.Printf('Extra codes (%dchars): %s\n', codeUTF32Tbl_Extra.len, Format('%04x', codeUTF32Tbl_Extra).Join(' '))
 	}
 	argv[0].Split(',') {|fontName|
 		GenerateFont(fontName, dirNameOut, codeUTF32Tbl_Extra)
@@ -132,15 +146,22 @@ main() = {
 }
 
 GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as Number) = {
-	try {
-		[fileContentBasic, fileContentExtra, wdInvalid, htInvalid] = dictFileContent[fontName]
-	} catch {
-		sys.cerr.Printf('unknown font: %s\n', fontName)
-		sys.cerr.Printf('available fonts: %s\n', dictFileContent.EachKey().Sort().Join(', '))
-		sys.Exit(1)
+	if (fontName.Find('.')) {
+		// treat fontName as a file name
+		bdfBasic = font.bdf.Context(fontName)
+		bdfExtra = nil
+		fontName = path.BaseName(path.FileName(fontName))
+	} else {
+		try {
+			[fileContentBasic, fileContentExtra] = dictEmbeddedFileContent[fontName]
+		} catch {
+			sys.cerr.Printf('unknown font: %s\n', fontName)
+			sys.cerr.Printf('available fonts: %s\n', dictEmbeddedFileContent.EachKey().Sort().Join(', '))
+			sys.Exit(1)
+		}
+		bdfBasic = font.bdf.Context(fileContentBasic.Reader().Reader@base64().Reader@bzip2())
+		bdfExtra = cond(fileContentExtra, font.bdf.Context(fileContentExtra.Reader().Reader@base64().Reader@bzip2()), nil)
 	}
-	bdfBasic = font.bdf.Context(fileContentBasic.Reader().Reader@base64().Reader@bzip2())
-	bdfExtra = cond(fileContentExtra, font.bdf.Context(fileContentExtra.Reader().Reader@base64().Reader@bzip2()), nil)
 	fileNameOut = path.Join(dirNameOut, Format('%s.h', fontName))
 	Stream(fileNameOut, 'w') {|fout|
 		fout.Print(eR'''
@@ -148,19 +169,24 @@ GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as N
 		#ifndef FONT_${fontName.Upper()}
 		#define FONT_${fontName.Upper()}
 		#include "jxglib/Font.h"
-		
+
 		namespace Font { namespace NS_${fontName} {
 		''')
-		GenerateCCode_Invalid(fout, wdInvalid, htInvalid)
+		GenerateCCode_Invalid(fout, bdfBasic)
 		bdfBasic.charEntryTbl.Each {|charEntry|
 			if (32 <= charEntry.codeUTF32 && charEntry.codeUTF32 <= 126) {
-				charEntry.GenerateCCode(fout)
+				charEntry.GenerateCCode(fout, bdfBasic)
 			}
 		}
-		bdfExtra && bdfExtra.charEntryTbl.Each {|charEntry|
-			if (charEntry.codeUTF32 in codeUTF32Tbl_Extra) {
-				charEntry.GenerateCCode(fout)
+		if (bdfExtra) {
+			bdfExtra.charEntryTbl.Each {|charEntry|
+				if (charEntry.codeUTF32 in codeUTF32Tbl_Extra) {
+					charEntry.GenerateCCode(fout, bdfExtra)
+				}
 			}
+		} elsif (!codeUTF32Tbl_Extra.IsEmpty()) {
+			sys.cerr.Printf('font %s doesn\'t contain extra characters\n', fontName)
+			codeUTF32Tbl_Extra = []
 		}
 		fout.Println('}')
 		fout.Println()
