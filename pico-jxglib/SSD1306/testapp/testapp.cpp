@@ -28,7 +28,7 @@ int main()
 	//::sleep_ms(1000);
 	oled.SetFontScale(1, 1);
 	oled.Clear();
-	const char* str = "本日は晴天なり";
+	const char* str = "本日は晴天なりああ";
 	oled.SetFont(Font::shinonome12);
 	oled.DrawString(0, 0, str);
 	oled.SetFont(Font::shinonome14);
