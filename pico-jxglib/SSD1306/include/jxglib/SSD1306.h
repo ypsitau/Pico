@@ -7,9 +7,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <pico/stdlib.h>
-#include <hardware/i2c.h>
-#include <jxglib/Font.h>
+#include "pico/stdlib.h"
+#include "hardware/i2c.h"
+#include "jxglib/Common.h"
+#include "jxglib/Font.h"
 
 class SSD1306 {
 public:
