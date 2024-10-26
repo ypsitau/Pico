@@ -3,7 +3,7 @@
 #include "pico/stdlib.h"
 #include "hardware/i2c.h"
 #include "jxglib/SSD1306.h"
-#include "jxglib/Font-Shinonome16.h"
+#include "jxglib/Font/shinonome16.h"
 #include "jxglib/StepMotor.h"
 #include "TCPServer.h"
 
@@ -121,7 +121,7 @@ int main()
 	oled.Initialize();
 	oled.Clear();
 	oled.Refresh();
-	oled.SetFont(Font::Shinonome16::fontSet);
+	oled.SetFont(Font::shinonome16);
 	oled.SetFontScale(1, 1);
 	do {
 		oled.Clear();

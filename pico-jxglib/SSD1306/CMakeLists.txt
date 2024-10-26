@@ -1,8 +1,5 @@
 add_library(pico_jxglib_SSD1306 INTERFACE)
 
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../Font Font)
-add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../Common Common)
-
 target_include_directories(pico_jxglib_SSD1306 INTERFACE
 	${CMAKE_CURRENT_LIST_DIR}/include)
 
