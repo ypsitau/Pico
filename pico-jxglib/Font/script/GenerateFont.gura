@@ -48,15 +48,18 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream, bdf as font.bdf.Context) = {
 	fontEntryName = Format('f_%04x', codeUTF32)
 	xOffset = this.BBX.ox
 	htFontBBox = bdf.FONTBOUNDINGBOX.h
+	//fout.Printf('const FontEntry %s = { 0x%04x, %d, %d, %d, {\n',
+	//					fontEntryName, codeUTF32, xOffset + this.BBX.w, htFontBBox, this.DWIDTH[0])
 	fout.Printf('const FontEntry %s = { 0x%04x, %d, %d, %d, {\n',
-						fontEntryName, codeUTF32, xOffset + this.BBX.w, htFontBBox, this.DWIDTH[0])
-	nBits = this.bytesPerLine * 8
+						fontEntryName, codeUTF32, this.BBX.w, htFontBBox, this.DWIDTH[0])
+	nBits = (this.bytesPerLine || 1) * 8
 	htLower = Max(this.BBX.oy + 1, 0)
 	htUpper = Max(htFontBBox - this.BITMAP.len - htLower, 0)
 	formatter.Begin(fout)
-	repeat (htUpper) { formatter.PutData(fout, nBits, 0) }
-	formatter.PutData(fout, nBits, this.BITMAP >> xOffset)
-	repeat (htLower) { formatter.PutData(fout, nBits, 0) }
+	//repeat (htUpper) { formatter.PutData(fout, nBits, 0) }
+	//formatter.PutData(fout, nBits, this.BITMAP >> xOffset)
+	//repeat (htLower) { formatter.PutData(fout, nBits, 0) }
+	formatter.PutData(fout, nBits, this.BITMAP)
 	formatter.End(fout)
 	fout.Printf('} };\n')
 }
@@ -111,7 +114,7 @@ main() = {
 		}
 	}
 	try {
-		nCols = Int(opt['cols'] || '64')
+		nCols = Int(opt['cols'] || '24')
 	} catch {
 		sys.cerr.Println('cols should take a number')
 		sys.Exit(1)
@@ -140,7 +143,19 @@ main() = {
 	if (codeUTF32Tbl_Extra.len > 0) {
 		sys.cerr.Printf('Extra codes (%dchars): %s\n', codeUTF32Tbl_Extra.len, Format('%04x', codeUTF32Tbl_Extra).Join(' '))
 	}
+	fontNames = []
 	argv[0].Split(',') {|fontName|
+		if (fontName == 'all') {
+			dictEmbeddedFileContent.EachKey {|fontName|
+				if (!fontNames.Contains(fontName)) {
+					fontNames.Add(fontName)
+				}
+			}
+		} elsif (!fontNames.Contains(fontName)) {
+			fontNames.Add(fontName)
+		}
+	}
+	fontNames.Each {|fontName|
 		GenerateFont(fontName, dirNameOut, codeUTF32Tbl_Extra)
 	}
 }
