@@ -7,8 +7,15 @@ import(argopt)
 //------------------------------------------------------------------------------
 // font.bdf.CharEntry.GenerateCCode
 //------------------------------------------------------------------------------
-Print8BitBinaryValue(fout as Stream, nBits as Number, data as Number) = {
-	fout.Printf('\t0b%s,\n', Format('%0*b', nBits, data).Fold(8).Join(',0b'))
+Formatter = class {
+	fout_ as Stream
+	nBits_ as Number
+	__init__(fout as Stream, nBits as Number) = {
+		this.fout_ = fout, this.nBits_ = nBits
+	}
+	PutData(data as Number) = {
+		this.fout_.Printf('\t0b%s,\n', Format('%0*b', this.nBits_, data).Fold(8).Join(',0b'))
+	}
 }
 
 font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
@@ -22,8 +29,9 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, %d, %d, {\n',
 						fontEntryName, codeUTF32, this.BBX.w, this.BBX.h)
 	nBits = this.bytesPerLine * 8
+	formatter = Formatter(fout, nBits)
 	this.BITMAP.Each {|data|
-		Print8BitBinaryValue(fout, nBits, data)
+		formatter.PutData(data)
 	}
 	fout.Printf('} };\n')
 }
@@ -34,12 +42,13 @@ GenerateCCode_Invalid(fout as Stream, width as Number, height as Number) = {
 	nBits = bytesPerLine * 8
 	dataTop = dataBottom = ((1 << (width - 1)) - 1) << (nBits - width + 1)
 	dataMid = (1 << (nBits - 1)) | (1 << (nBits - width + 1))
-	Print8BitBinaryValue(fout, nBits, dataTop)
+	formatter = Formatter(fout, nBits)
+	formatter.PutData(dataTop)
 	repeat (height - 3) {
-		Print8BitBinaryValue(fout, nBits, dataMid)
+		formatter.PutData(dataMid)
 	}
-	Print8BitBinaryValue(fout, nBits, dataBottom)
-	Print8BitBinaryValue(fout, nBits, 0)
+	formatter.PutData(dataBottom)
+	formatter.PutData(0)
 	fout.Printf('} };\n')
 }
 
