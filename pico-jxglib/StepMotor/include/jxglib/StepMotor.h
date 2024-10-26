@@ -1,10 +1,16 @@
-#ifndef STEPMOTOR_H
-#define STEPMOTOR_H
+//==============================================================================
+// StepMotor.h
+//==============================================================================
+#ifndef PICO_JXGLIB_STEPMOTOR_H
+#define PICO_JXGLIB_STEPMOTOR_H
 #include <stdio.h>
-#include <pico/stdlib.h>
-#include <hardware/pio.h>
-#include <hardware/clocks.h>
+#include "pico/stdlib.h"
+#include "hardware/pio.h"
+#include "hardware/clocks.h"
 
+//------------------------------------------------------------------------------
+// StepMotor
+//------------------------------------------------------------------------------
 class StepMotor {
 public:
 	enum class Status { Stop, Running };
@@ -30,13 +36,13 @@ public:
 		idxSm_(static_cast<uint>(-1)), gpioFirst_(gpioFirst), nPulsesPerSec_(nPulsesPerSec),
 		posCur_(0), nPulsesToSet_(0), status_(Status::Stop), direction_(Direction::A) {}
 	static void AddPIOProgram(PIO pio);
-	void StartPIOSm(uint idxSm);
-	void Stop();
+	void RunPIOSm(uint idxSm);
 	void StartGeneric(uint32_t pattern, int nPulses, Direction direction);
 	void StartFullA(int nPulses) { StartGeneric(Pattern_Full_A, nPulses, Direction::A); }
 	void StartFullB(int nPulses) { StartGeneric(Pattern_Full_B, nPulses, Direction::B); }
 	void StartHalfA(int nPulses) { StartGeneric(Pattern_Half_A, nPulses, Direction::A); }
 	void StartHalfB(int nPulses) { StartGeneric(Pattern_Half_B, nPulses, Direction::B); }
+	void Stop();
 	int GetPosCur() const { return posCur_; }
 };
 

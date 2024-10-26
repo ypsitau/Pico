@@ -1,11 +1,20 @@
 #!/usr/bin/env gurax
+//==============================================================================
+// gurax GenerateFont.gura shinonome16
+// .. generates shinonome16.h that contains basic fonts
+// gurax GenerateFont.gura shinonome16 source1.cpp source2.cpp
+// .. generates shinonome16.h that contains basic fonts as well as extra fonts
+//    used in source1.cpp and source2.cpp
+// gurax GenerateFont.gura shinonome16 -o include/jxglib/Font
+// .. specifies output directory
+//==============================================================================
 import(font.bdf)
 import(tar)
 import(bzip2)
 import(argopt)
 
 //------------------------------------------------------------------------------
-// font.bdf.CharEntry.GenerateCCode
+// Formatter
 //------------------------------------------------------------------------------
 formatter = nil
 
@@ -181,11 +190,12 @@ GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as N
 	Stream(fileNameOut, 'w') {|fout|
 		fout.Print(eR'''
 		// ${bdfBasic.XLogicalFontDescription}
-		#ifndef FONT_${fontName.Upper()}
-		#define FONT_${fontName.Upper()}
+		#ifndef PICO_JXGLIB_FONT_${fontName.Upper()}_H
+		#define PICO_JXGLIB_FONT_${fontName.Upper()}_H
 		#include "jxglib/Font.h"
 
 		namespace Font { namespace NS_${fontName} {
+
 		''')
 		GenerateCCode_Invalid(fout, bdfBasic)
 		bdfBasic.charEntryTbl.Each {|charEntry|
@@ -203,6 +213,7 @@ GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as N
 			sys.cerr.Printf('font %s doesn\'t contain extra characters\n', fontName)
 			codeUTF32Tbl_Extra = []
 		}
+		fout.Println()
 		fout.Println('}')
 		fout.Println()
 		fout.Printf('const FontSet %s = { &NS_%s::f_Invalid, {\n', fontName, fontName)

@@ -1,10 +1,13 @@
 //==============================================================================
 // Font
 //==============================================================================
-#ifndef FONT_H
-#define FONT_H
-#include <pico/stdlib.h>
+#ifndef PICO_JXGLIB_FONT_H
+#define PICO_JXGLIB_FONT_H
+#include "pico/stdlib.h"
 
+//------------------------------------------------------------------------------
+// FontEntry
+//------------------------------------------------------------------------------
 struct FontEntry {
 	uint32_t code;
 	int width;
@@ -13,6 +16,9 @@ struct FontEntry {
 	uint8_t data[];
 };
 
+//------------------------------------------------------------------------------
+// FontSet
+//------------------------------------------------------------------------------
 struct FontSet {
 	const FontEntry* GetFontEntry(uint32_t code) const;
 	const FontEntry* pFontEntry_Invalid;

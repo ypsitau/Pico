@@ -1,9 +1,10 @@
 // -Shinonome-Gothic-Medium-R-Normal--14-130-75-75-C-70-JISX0201.1976-0
-#ifndef FONT_SHINONOME14
-#define FONT_SHINONOME14
+#ifndef PICO_JXGLIB_FONT_SHINONOME14_H
+#define PICO_JXGLIB_FONT_SHINONOME14_H
 #include "jxglib/Font.h"
 
 namespace Font { namespace NS_shinonome14 {
+
 const FontEntry f_Invalid = { 0x0000, 7, 14, 7, {
 0xfc,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0x84,0xfc,0x00,
 } };
@@ -387,6 +388,7 @@ const FontEntry f_007d = { 0x007d, 7, 14, 7, {
 const FontEntry f_007e = { 0x007e, 7, 14, 7, {
 0xfe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 } };
+
 }
 
 const FontSet shinonome14 = { &NS_shinonome14::f_Invalid, {

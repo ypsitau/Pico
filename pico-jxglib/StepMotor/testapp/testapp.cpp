@@ -11,8 +11,8 @@ int main()
 	StepMotor::AddPIOProgram(pio0);
 	StepMotor stepMotorL(6, 400);
 	StepMotor stepMotorR(10, 400);
-	stepMotorL.StartPIOSm(::pio_claim_unused_sm(pio0, true));
-	stepMotorR.StartPIOSm(::pio_claim_unused_sm(pio0, true));
+	stepMotorL.RunPIOSm(::pio_claim_unused_sm(pio0, true));
+	stepMotorR.RunPIOSm(::pio_claim_unused_sm(pio0, true));
 	::printf("Left Right\n");
 	::printf("[Q]  [W]    Forward\n");
 	::printf("[A]  [S]    Stop\n");
