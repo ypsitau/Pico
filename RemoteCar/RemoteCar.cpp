@@ -9,8 +9,8 @@
 
 SSD1306 oled(i2c_default);
 
-StepMotor stepMotorL(0, 6, 400);
-StepMotor stepMotorR(1, 10, 400);
+StepMotor stepMotorL(6, 400);
+StepMotor stepMotorR(10, 400);
 
 class EventHandlerEx : public EventHandler {
 public:
@@ -109,9 +109,9 @@ int main()
 {
 	EventHandlerEx EventHandler;
 	std::unique_ptr<TCPServer> pTCPServer(new TCPServer(4242, EventHandler));
-	StepMotor::Initialize(pio0);
-	stepMotorL.Enable();
-	stepMotorR.Enable();
+	StepMotor::AddPIOProgram(pio0);
+	stepMotorL.StartPIOSm(::pio_claim_unused_sm(pio0, true));
+	stepMotorR.StartPIOSm(::pio_claim_unused_sm(pio0, true));
 	stdio_init_all();
 	i2c_init(i2c_default, 400 * 1000);
 	::gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);

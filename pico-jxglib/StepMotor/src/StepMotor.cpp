@@ -4,14 +4,15 @@
 PIO StepMotor::pio_ = nullptr;
 int StepMotor::offsetProgram_ = -1;
 
-void StepMotor::Initialize(PIO pio)
+void StepMotor::AddPIOProgram(PIO pio)
 {
 	pio_ = pio;
 	offsetProgram_ = pio_add_program(pio_, &RotateOut4Bits_program);
 }
 
-void StepMotor::Enable()
+void StepMotor::StartPIOSm(uint idxSm)
 {
+	idxSm_ = idxSm;
 	RotateOut4Bits_program_init(pio_, idxSm_, offsetProgram_, gpioFirst_);
 	pio_sm_set_enabled(pio_, idxSm_, true);
 }

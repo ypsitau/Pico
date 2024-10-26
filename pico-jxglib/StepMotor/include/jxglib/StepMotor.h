@@ -26,11 +26,11 @@ public:
 	const uint32_t Pattern_Half_A = 0b1100'1000'1001'0001'0011'0010'0110'0100;
 	const uint32_t Pattern_Half_B = 0b1100'0100'0110'0010'0011'0001'1001'1000;
 public:
-	StepMotor(uint idxSm, int gpioFirst, int nPulsesPerSec = 500) :
-				idxSm_(idxSm), gpioFirst_(gpioFirst), nPulsesPerSec_(nPulsesPerSec),
-				posCur_(0), nPulsesToSet_(0), status_(Status::Stop), direction_(Direction::A) {}
-	static void Initialize(PIO pio);
-	void Enable();
+	StepMotor(int gpioFirst, int nPulsesPerSec = 500) :
+		idxSm_(static_cast<uint>(-1)), gpioFirst_(gpioFirst), nPulsesPerSec_(nPulsesPerSec),
+		posCur_(0), nPulsesToSet_(0), status_(Status::Stop), direction_(Direction::A) {}
+	static void AddPIOProgram(PIO pio);
+	void StartPIOSm(uint idxSm);
 	void Stop();
 	void StartGeneric(uint32_t pattern, int nPulses, Direction direction);
 	void StartFullA(int nPulses) { StartGeneric(Pattern_Full_A, nPulses, Direction::A); }
