@@ -1,5 +1,8 @@
-#ifndef COMMON_H
-#define COMMON_H
+//==============================================================================
+// jxglib/Common.h
+//==============================================================================
+#ifndef PICO_JXGLIB_COMMON_H
+#define PICO_JXGLIB_COMMON_H
 #include "Color.h"
 #include "FIFOBuff.h"
 #include "Point.h"

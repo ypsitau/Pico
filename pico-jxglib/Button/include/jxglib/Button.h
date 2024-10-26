@@ -1,11 +1,16 @@
-#ifndef BUTTON_H
-#define BUTTON_H
-
+//==============================================================================
+// jxglib/Buton.h
+//==============================================================================
+#ifndef PICO_JXGLIB_BUTTON_H
+#define PICO_JXGLIB_BUTTON_H
 #include <stdio.h>
-#include <pico/stdlib.h>
 #include <memory>
+#include "pico/stdlib.h"
 #include "jxglib/FIFOBuff.h"
 
+//------------------------------------------------------------------------------
+// Button
+//------------------------------------------------------------------------------
 class Button {
 public:
 	enum class EventType { None, Pressed, Released };
