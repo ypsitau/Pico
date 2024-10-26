@@ -37,7 +37,7 @@ add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../ pico_jxglib_SSD1306)
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(testapp testapp.cpp )
+add_executable(testapp testapp.cpp)
 
 pico_set_program_name(testapp "testapp")
 pico_set_program_version(testapp "0.1")

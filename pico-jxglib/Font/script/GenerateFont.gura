@@ -9,7 +9,30 @@ import(argopt)
 //------------------------------------------------------------------------------
 formatter = nil
 
+Formatter_Hex = class {
+	iCol_ as Number = 0
+	nCols_ as Number
+	__init__(nCols as Number) = { this.nCols_ = nCols }
+	Begin(fout as Stream) = { this.iCol_ = 0 }
+	End(fout as Stream) = { fout.Print('\n') }
+	PutData(fout as Stream, nBits as Number, data as Number):void:map = {
+		buff = []
+		while (nBits > 0) {
+			buff.Add(data & 0xff)
+			data >>= 8
+			nBits -= 8
+		}
+		buff.Reverse {|num|
+			if (this.iCol_ == this.nCols_) { fout.Printf('\n\t'), this.iCol_ = 0 }
+			fout.Printf('0x%02x,', num)
+			this.iCol_ += 1
+		}
+	}
+}
+
 Formatter_Binary = class {
+	Begin(fout as Stream) = { /* do nothing */ }
+	End(fout as Stream) = { /* do nothing */ }
 	PutData(fout as Stream, nBits as Number, data as Number):void:map = {
 		fout.Printf('\t0b%s,\n', Format('%0*b', nBits, data).Fold(8).Join(',0b'))
 	}
@@ -22,24 +45,28 @@ font.bdf.CharEntry.GenerateCCode(fout as Stream) = {
 	} else {
 		fout.Printf("// 0x%04x\n", codeUTF32)
 	}
-	fontEntryName = Format('fontEntry_%04x', codeUTF32)
-	fout.Printf('const SSD1306::FontEntry %s = { 0x%04x, %d, %d, {\n',
+	fontEntryName = Format('f_%04x', codeUTF32)
+	fout.Printf('const FontEntry %s = { 0x%04x, %d, %d, {\n',
 						fontEntryName, codeUTF32, this.BBX.w, this.BBX.h)
 	nBits = this.bytesPerLine * 8
+	formatter.Begin(fout)
 	formatter.PutData(fout, nBits, this.BITMAP)
+	formatter.End(fout)
 	fout.Printf('} };\n')
 }
 
 GenerateCCode_Invalid(fout as Stream, width as Number, height as Number) = {
-	fout.Printf('const SSD1306::FontEntry fontEntry_Invalid = { 0x0000, %d, %d, {\n', width, height)
+	fout.Printf('const FontEntry f_Invalid = { 0x0000, %d, %d, {\n', width, height)
 	bytesPerLine = Int((width + 7) / 8)
 	nBits = bytesPerLine * 8
 	dataTop = dataBottom = ((1 << (width - 1)) - 1) << (nBits - width + 1)
 	dataMid = (1 << (nBits - 1)) | (1 << (nBits - width + 1))
+	formatter.Begin(fout)
 	formatter.PutData(fout, nBits, dataTop)
 	repeat (height - 3) { formatter.PutData(fout, nBits, dataMid) }
 	formatter.PutData(fout, nBits, dataBottom)
 	formatter.PutData(fout, nBits, 0)
+	formatter.End(fout)
 	fout.Printf('} };\n')
 }
 
@@ -57,7 +84,8 @@ options:
   ${p.FormatHelp() + '\n'}
 '''
 main() = {
-	formatter:extern = Formatter_Binary()
+	//formatter:extern = Formatter_Binary()
+	formatter:extern = Formatter_Hex(64)
 	dictFileContent:extern = %{
 		'shinonome12' => (fileContent_shnm6x12r_bdf_bz2, fileContent_shnmk12_bdf_bz2, 6, 12)
 		'shinonome14' => (fileContent_shnm7x14r_bdf_bz2, fileContent_shnmk14_bdf_bz2, 7, 14)
@@ -119,32 +147,29 @@ GenerateFont(fontName as String, dirNameOut as String, codeUTF32Tbl_Extra[] as N
 		// ${bdfBasic.XLogicalFontDescription}
 		#ifndef FONT_${fontName.Upper()}
 		#define FONT_${fontName.Upper()}
-
+		#include "jxglib/Font.h"
+		
 		namespace Font { namespace NS_${fontName} {
 		''')
-		fout.Println()
 		GenerateCCode_Invalid(fout, wdInvalid, htInvalid)
 		bdfBasic.charEntryTbl.Each {|charEntry|
 			if (32 <= charEntry.codeUTF32 && charEntry.codeUTF32 <= 126) {
-				fout.Println()
 				charEntry.GenerateCCode(fout)
 			}
 		}
 		bdfExtra && bdfExtra.charEntryTbl.Each {|charEntry|
 			if (charEntry.codeUTF32 in codeUTF32Tbl_Extra) {
-				fout.Println()
 				charEntry.GenerateCCode(fout)
 			}
 		}
-		fout.Println()
 		fout.Println('}')
 		fout.Println()
-		fout.Printf('const SSD1306::Font %s = { &NS_%s::fontEntry_Invalid, {\n', fontName, fontName)
-		fout.Printf('\t&NS_%s::fontEntry_%04x,\n', fontName, 32..126)
+		fout.Printf('const FontSet %s = { &NS_%s::f_Invalid, {\n', fontName, fontName)
+		fout.Printf('\t&NS_%s::f_%04x,\n', fontName, 32..126)
 		fout.Print(eR'''
 		}, ${codeUTF32Tbl_Extra.len}, {
 		''')
-		fout.Printf('\t&NS_%s::fontEntry_%04x,\n', fontName, codeUTF32Tbl_Extra)
+		fout.Printf('\t&NS_%s::f_%04x,\n', fontName, codeUTF32Tbl_Extra)
 		fout.Print(R'''
 		} };
 
