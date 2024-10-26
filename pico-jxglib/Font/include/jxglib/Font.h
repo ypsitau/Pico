@@ -9,6 +9,7 @@ struct FontEntry {
 	uint32_t code;
 	int width;
 	int height;
+	int xAdvance;
 	uint8_t data[];
 };
 
