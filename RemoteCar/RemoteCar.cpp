@@ -7,6 +7,8 @@
 #include "jxglib/StepMotor.h"
 #include "TCPServer.h"
 
+using namespace jxglib;
+
 SSD1306 oled(i2c_default);
 
 StepMotor stepMotorL(6, 400);
@@ -110,8 +112,8 @@ int main()
 	EventHandlerEx EventHandler;
 	std::unique_ptr<TCPServer> pTCPServer(new TCPServer(4242, EventHandler));
 	StepMotor::AddPIOProgram(pio0);
-	stepMotorL.StartPIOSm(::pio_claim_unused_sm(pio0, true));
-	stepMotorR.StartPIOSm(::pio_claim_unused_sm(pio0, true));
+	stepMotorL.RunPIOSm(::pio_claim_unused_sm(pio0, true));
+	stepMotorR.RunPIOSm(::pio_claim_unused_sm(pio0, true));
 	stdio_init_all();
 	i2c_init(i2c_default, 400 * 1000);
 	::gpio_set_function(PICO_DEFAULT_I2C_SDA_PIN, GPIO_FUNC_I2C);

@@ -19,3 +19,6 @@
 [submodule "pico-playground"]
 	path = pico-playground
 	url = https://github.com/raspberrypi/pico-playground
+[submodule "pico-jxglib"]
+	path = pico-jxglib
+	url = https://github.com/ypsitau/pico-jxglib.git
