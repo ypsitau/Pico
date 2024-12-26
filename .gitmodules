@@ -2,7 +2,7 @@
 	path = debugprobe
 	url = https://github.com/raspberrypi/debugprobe.git
 [submodule "pico-ssd1306"]
-	path = pico-ssd1306
+	path = old/pico-ssd1306
 	url = https://github.com/daschr/pico-ssd1306
 [submodule "pico-examples"]
 	path = pico-examples

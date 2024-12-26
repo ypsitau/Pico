@@ -9,6 +9,7 @@
 .pio_version 0 // only requires PIO version 0
 
 .program blink
+.set 1
     pull block
     out y, 32
 .wrap_target
